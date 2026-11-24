@@ -1,8 +1,0 @@
-{
- "frames": 60,
- "width": 1600,
- "height": 900,
- "pattern": "f{i}.webp",
- "pad": 2,
- "source": "seg01/land (60 nominal 16:9 frames, zero depth-warp)"
-}

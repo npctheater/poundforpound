@@ -1,6 +1,6 @@
 // Fighter-select poster wall: lean hardware-decoded 720x1080 H.264 portal breakouts + live idle loops.
-// Auto-plays staggered breakouts on arrival (desktop: all three; phone: whichever bay is centered in the swipe strip),
-// replays on click/tap/hover, and strictly pauses ALL videos the instant the wall leaves the viewport.
+// Strictly 1 active fighter video at a time so scrolling stays locked 60fps: Cole plays on arrival,
+// hovering/clicking (desktop) or swiping/tapping (phone) any fighter pauses the others and plays its breakout + idle.
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const coarse = matchMedia('(pointer: coarse)').matches;
 
@@ -29,9 +29,8 @@ export async function initPosters(wall) {
   if (!wall) return;
   const bays = [...wall.querySelectorAll('.bay')];
   const state = new Map();
-  const timers = new Set();
   let wallVisible = false;
-  let arrived = false;
+  let activeBay = null;
 
   await Promise.all(bays.map(async (bay) => {
     const m = await manifestFor(bay.dataset.poster);
@@ -54,7 +53,6 @@ export async function initPosters(wall) {
       idle.poster = m.base + m.still;
     }
 
-    // Prefer baked-down hardware-decoded H.264 web clips (720x1080, 3.4x lighter, silky smooth on phone & desktop)
     const openFile = m.openingWeb || pick(m.opening);
     const idleFile = m.idleWeb || pick(m.idle);
 
@@ -65,7 +63,7 @@ export async function initPosters(wall) {
         s.loaded = true;
         idle.src = m.base + idleFile;
         open.src = m.base + openFile;
-        idle.preload = open.preload = 'auto';
+        idle.preload = open.preload = 'metadata';
       },
       pauseAll() {
         if (!idle.paused) idle.pause();
@@ -79,12 +77,13 @@ export async function initPosters(wall) {
     state.set(bay, s);
 
     open.addEventListener('playing', () => {
-      if (!wallVisible) { open.pause(); s.busy = false; return; }
+      if (!wallVisible || activeBay !== bay) { open.pause(); s.busy = false; return; }
       bay.classList.add('opening');
     });
     open.addEventListener('ended', () => {
       s.busy = false;
-      if (!wallVisible) { bay.classList.remove('opening'); idle.pause(); return; }
+      if (!wallVisible || activeBay !== bay) { bay.classList.remove('opening'); idle.pause(); return; }
+      window.__p4pClaimVideo?.(idle);
       idle.currentTime = 0;
       const p = idle.play();
       if (p) p.catch(() => {});
@@ -93,102 +92,71 @@ export async function initPosters(wall) {
     });
   }));
 
-  function clearTimers() {
-    for (const t of timers) clearTimeout(t);
-    timers.clear();
-  }
-
-  function breakout(bay) {
+  function activateBay(bay, replayOpening = true) {
+    if (!bay || !wallVisible) return;
     const s = state.get(bay);
-    if (!s || s.busy || !wallVisible) return;
-    s.load();
-    s.played = true;
+    if (!s) return;
+    for (const other of state.values()) if (other.bay !== bay) other.pauseAll();
+    activeBay = bay;
+    bays.forEach((b) => b.classList.toggle('on', b === bay));
     if (reduce) return;
-    s.busy = true;
-    s.open.currentTime = 0;
-    const p = s.open.play();
-    if (p) {
-      p.catch(() => {
-        s.busy = false;
-        bay.classList.remove('opening');
-      });
+    s.load();
+    if (replayOpening || !s.played) {
+      s.played = true;
+      s.busy = true;
+      window.__p4pClaimVideo?.(s.open);
+      s.open.currentTime = 0;
+      const p = s.open.play();
+      if (p) p.catch(() => { s.busy = false; bay.classList.remove('opening'); });
+    } else if (bay.classList.contains('has-idle')) {
+      window.__p4pClaimVideo?.(s.idle);
+      s.idle.play().catch(() => {});
     }
   }
 
-  // Strictly pause everything when #fighters leaves view; auto-play staggered breakouts on arrival
+  let arriveTimer = 0;
   new IntersectionObserver(([e]) => {
     wallVisible = e.isIntersecting;
     if (!wallVisible) {
-      clearTimers();
+      if (arriveTimer) { clearTimeout(arriveTimer); arriveTimer = 0; }
       for (const s of state.values()) s.pauseAll();
       return;
     }
-    if (!arrived) {
-      arrived = true;
-      const targets = coarse ? bays.slice(0, 1) : bays;
-      targets.forEach((b, i) => {
-        const id = setTimeout(() => { timers.delete(id); if (wallVisible) breakout(b); }, 180 + i * 420);
-        timers.add(id);
-      });
+    if (!activeBay) {
+      // Brief pause so all three painted fighter posters register cleanly on arrival before Cole's portal breakout plays
+      arriveTimer = setTimeout(() => { arriveTimer = 0; if (wallVisible && !activeBay) activateBay(bays[0], true); }, 650);
     } else {
-      for (const s of state.values()) {
-        if (s.bay.classList.contains('has-idle') && (!coarse || s.bay.classList.contains('on'))) {
-          const p = s.idle.play();
-          if (p) p.catch(() => {});
-        }
-      }
+      activateBay(activeBay, false);
     }
-  }, { threshold: 0.12 }).observe(wall);
+  }, { threshold: 0.15 }).observe(wall);
 
-  // On phones, play whichever fighter is centered as the user swipes horizontally (only 1 active decoder at a time)
   if (coarse) {
     const bayIO = new IntersectionObserver((es) => {
       if (!wallVisible) return;
       for (const e of es) {
-        const bay = e.target;
-        const s = state.get(bay);
-        if (!s) continue;
-        if (e.isIntersecting) {
-          for (const other of state.values()) if (other.bay !== bay) other.pauseAll();
-          bays.forEach((b) => b.classList.toggle('on', b === bay));
-          if (!s.played) breakout(bay);
-          else if (bay.classList.contains('has-idle')) s.idle.play().catch(() => {});
-        }
+        if (e.isIntersecting && e.target !== activeBay) activateBay(e.target, false);
       }
     }, { root: wall, threshold: 0.65 });
     bays.forEach((b) => bayIO.observe(b));
-  }
-
-  let current = null;
-  const light = (bay) => {
-    if (bay === current) return;
-    current = bay;
-    bays.forEach((b) => b.classList.toggle('on', b === bay));
-    wall.classList.toggle('lit', !!bay);
-    if (!coarse && bay && state.get(bay)?.played) breakout(bay);
-  };
-
-  if (!coarse) {
+  } else {
+    let hoverBay = null;
     wall.addEventListener('pointermove', (e) => {
       if (e.pointerType !== 'mouse') return;
-      const r = wall.getBoundingClientRect();
-      wall.style.setProperty('--lx', `${(((e.clientX - r.left) / r.width) * 100).toFixed(1)}%`);
-      wall.style.setProperty('--ly', `${(Math.min(0.75, (e.clientY - r.top) / r.height) * 100).toFixed(1)}%`);
-      light(e.target.closest('.bay'));
+      const bay = e.target.closest('.bay');
+      if (bay === hoverBay) return;
+      hoverBay = bay;
+      wall.classList.toggle('lit', !!bay);
+      if (bay && bay !== activeBay) activateBay(bay, true);
     }, { passive: true });
-    wall.addEventListener('pointerleave', () => light(null));
+    wall.addEventListener('pointerleave', () => {
+      hoverBay = null;
+      wall.classList.remove('lit');
+    });
   }
 
   bays.forEach((bay) => {
-    bay.addEventListener('click', () => {
-      if (coarse) {
-        for (const s of state.values()) if (s.bay !== bay) s.pauseAll();
-      }
-      current = null;
-      light(bay);
-      breakout(bay);
-    });
-    bay.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); bay.click(); } });
-    bay.addEventListener('focus', () => light(bay));
+    bay.addEventListener('click', () => activateBay(bay, true));
+    bay.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); activateBay(bay, true); } });
+    bay.addEventListener('focus', () => { if (bay !== activeBay) activateBay(bay, false); });
   });
 }

@@ -1,6 +1,13 @@
-// Pound for Pound site behaviour. Free scrolling, zero idle loops, strict off-screen pausing.
+// Pound for Pound site behaviour. Free native scrolling, strictly 1 active video at a time, zero idle loops.
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const coarse = matchMedia('(pointer: coarse)').matches;
+
+// Global single-video coordinator: never allow 2+ videos to decode concurrently anywhere on the page
+window.__p4pClaimVideo = (active) => {
+  document.querySelectorAll('video').forEach((v) => {
+    if (v !== active && !v.paused) v.pause();
+  });
+};
 
 // ---------- nav background once scrolled ----------
 const nav = document.querySelector('.nav');
@@ -63,14 +70,14 @@ import('./chalk.js?v=8').then((m) => m.initChalk(document.querySelector('.chalk-
 // ---------- copy panels: pre-lit baked boards (zero WebGL, lazy per-panel) ----------
 import('./panels.js?v=25').then((m) => m.initPanels()).catch((err) => console.warn('panels unavailable', err));
 
-// ---------- fighter-select poster wall (lazy init only near view) ----------
+// ---------- fighter-select poster wall (lazy init only near view; 1 active fighter video at a time) ----------
 {
   const wall = document.getElementById('poster-wall');
   if (wall) {
     const o = new IntersectionObserver(([e]) => {
       if (e.isIntersecting) {
         o.disconnect();
-        import('./posters.js?v=19').then((m) => m.initPosters(wall)).catch((err) => console.warn('posters unavailable', err));
+        import('./posters.js?v=20').then((m) => m.initPosters(wall)).catch((err) => console.warn('posters unavailable', err));
       }
     }, { rootMargin: '450px 0px' });
     o.observe(wall);
@@ -119,14 +126,12 @@ import('./panels.js?v=25').then((m) => m.initPanels()).catch((err) => console.wa
 const startGymUI = () => import('./gymui.js?v=3').then((m) => m.initGymUI()).catch((err) => console.warn('gym UI unavailable', err));
 if (document.readyState === 'complete') startGymUI(); else addEventListener('load', startGymUI, { once: true });
 
-// ---------- the rail: artifact-free night-gym flythrough (zero depth-warp, zero WebGL, 0 idle rAF) ----------
-import('./rail.js?v=31').then(({ initRail }) => initRail({
+// ---------- the rail: hardware-decoded 60fps ring backdrop (zero scroll-scrubbing, zero stepping, 0 idle rAF) ----------
+import('./rail.js?v=33').then(({ initRail }) => initRail({
   canvas: document.getElementById('rail'),
-  manifest: 'assets/rail/seg01/frames/manifest.json',
-  maxDpr: 1.5,
 })).catch((err) => { document.documentElement.classList.add('no-rail'); console.warn('rail unavailable', err); });
 
-// ---------- highlight videos: lazy load near view, strictly pause off-screen ----------
+// ---------- highlight videos: strictly 1 active video at a time; hero auto-plays in view, others play on click/tap ----------
 {
   let videoIndexPromise = null;
   const getVideoIndex = () => (videoIndexPromise ??= fetch('assets/video/index.json')
@@ -134,35 +139,63 @@ import('./rail.js?v=31').then(({ initRail }) => initRail({
     .then((j) => new Set(j.files || []))
     .catch(() => new Set()));
 
+  const PLAY_SVG = '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><polygon points="7,4 20,12 7,20"/></svg>';
   const vids = [...document.querySelectorAll('video[data-src]')];
   vids.forEach((v) => {
+    const fig = v.closest('.vid');
     const isHeroVid = v.closest('.vid-hero') !== null;
-    // On phones, secondary clips load/play on tap instead of decoding 4 1080p streams concurrently
-    if (coarse && !isHeroVid) {
-      v.controls = true;
-      v.addEventListener('play', () => { vids.forEach((o) => { if (o !== v && !o.paused) o.pause(); }); });
+
+    let btn = null;
+    if (!isHeroVid && fig) {
+      btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'vid-play';
+      btn.setAttribute('aria-label', 'Play clip');
+      btn.innerHTML = PLAY_SVG;
+      fig.appendChild(btn);
     }
+
+    const syncState = () => fig?.classList.toggle('is-playing', !v.paused && !v.ended);
+    v.addEventListener('play', syncState);
+    v.addEventListener('pause', syncState);
+    v.addEventListener('ended', syncState);
+
+    const startPlay = async () => {
+      if (!v.src) {
+        const name = v.dataset.src.split('/').pop();
+        const idx = await getVideoIndex();
+        if (!idx.has(name)) return;
+        v.src = v.dataset.src;
+      }
+      window.__p4pClaimVideo?.(v);
+      v.play().catch(() => {});
+    };
+
+    const togglePlay = () => {
+      if (!v.paused) { v.pause(); return; }
+      startPlay();
+    };
+    if (btn) btn.addEventListener('click', togglePlay);
+    v.addEventListener('click', togglePlay);
+
     let isVis = false;
     const o = new IntersectionObserver(async ([e]) => {
       isVis = e.isIntersecting;
-      if (isVis) {
+      if (isVis && isHeroVid && !reduce) {
         if (!v.src) {
           const name = v.dataset.src.split('/').pop();
           const idx = await getVideoIndex();
           if (!isVis || !idx.has(name)) return;
-          if (!coarse || isHeroVid) v.src = v.dataset.src;
-          else {
-            v.addEventListener('pointerdown', () => {
-              if (!v.src) { v.src = v.dataset.src; v.play().catch(() => {}); }
-            }, { once: true });
-            return;
-          }
+          v.src = v.dataset.src;
         }
-        if (isVis && !reduce && (!coarse || isHeroVid)) v.play().catch(() => {});
-      } else if (v.src && !v.paused) {
+        if (isVis) {
+          window.__p4pClaimVideo?.(v);
+          v.play().catch(() => {});
+        }
+      } else if (!isVis && v.src && !v.paused) {
         v.pause();
       }
-    }, { rootMargin: '80px 0px', threshold: 0.05 });
+    }, { rootMargin: '60px 0px', threshold: 0.15 });
     o.observe(v);
   });
 }

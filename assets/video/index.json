@@ -1,4 +1,4 @@
 {
- "about": "Body-tracking highlight videos that have landed here; js/site.js only loads names listed in files.",
- "files": ["hero.mp4", "clip1.mp4", "clip2.mp4", "clip3.mp4"]
+  "about": "Hero ring fly-through, head-stabilized 1st-person POV clips, and full-body replay highlights rendered from real recorded bouts.",
+  "files": ["hero-ring.mp4", "hero-ring-m.mp4", "pov-ko.mp4", "pov-exchange.mp4", "pov-slip.mp4", "hero.mp4"]
 }
