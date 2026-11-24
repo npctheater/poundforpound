@@ -165,7 +165,7 @@ if (document.readyState === 'complete') startGymUI(); else addEventListener('loa
 
 // ---------- the rail: baked gym flythrough on the fixed canvas, driven by native scroll ----------
 // 'flight' is store-art's seg01 (hero wide to ring POV), web copy from site-tools/make_rail_web.py; the full flythrough's segments follow.
-import('./rail.js?v=26').then(({ initRail }) => initRail({
+import('./rail.js?v=27').then(({ initRail }) => initRail({
   canvas: document.getElementById('rail'),
   segments: { flight: 'assets/rail/seg01/v/seg.json' },
 })).catch(err => { document.documentElement.classList.add('no-rail'); console.warn('rail unavailable', err); });

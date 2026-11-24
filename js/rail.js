@@ -107,15 +107,27 @@ export async function initRail({ canvas, segments, maxDpr = 2 }) {
   function wantVideo(seg, i) {
     const V = seg.vid, fr = V.cache.get(i);
     let d = seg.dbm.get(i);
-    if (!d && seg.dblobs[i] && !seg.dpending.has(i)) {
-      seg.dpending.add(i);
-      createImageBitmap(seg.dblobs[i]).then(bm => { seg.dpending.delete(i); seg.dbm.set(i, bm);
-        while (seg.dbm.size > 64) { const [k0, b0] = seg.dbm.entries().next().value; seg.dbm.delete(k0); b0.close(); }
-        dirty = true; kick(); }).catch(() => seg.dpending.delete(i));
-    } else if (d) { seg.dbm.delete(i); seg.dbm.set(i, d); }
+    if (!d) { const u = seg.dunit(i); if (seg.dblobs[u] && !seg.dpending.has(u)) decodeDepth(seg, u); }
+    else { seg.dbm.delete(i); seg.dbm.set(i, d); }
     if (fr) { V.cache.delete(i); V.cache.set(i, fr); }
     else requestGop(seg, Math.floor(i / V.gop));
     return fr && d ? { c: fr, d } : null;
+  }
+  // depth arrives per unit: a strip of GOP frames (decoded once, then cropped per frame) or, in older manifests, one frame
+  function decodeDepth(seg, u) {
+    seg.dpending.add(u);
+    const ds = seg.dstrip;
+    createImageBitmap(seg.dblobs[u]).then(async bm => {
+      let got = [[u, bm]];
+      if (ds) {
+        const n = Math.min(ds.frames, seg.frames - u * ds.frames);
+        got = await Promise.all(Array.from({ length: n }, (_, j) => createImageBitmap(bm, 0, j * ds.h, ds.w, ds.h).then(b => [u * ds.frames + j, b])));
+        bm.close();
+      }
+      for (const [k, b] of got) { const old = seg.dbm.get(k); if (old) { seg.dbm.delete(k); old.close(); } seg.dbm.set(k, b); }
+      while (seg.dbm.size > 64) { const [k0, b0] = seg.dbm.entries().next().value; seg.dbm.delete(k0); b0.close(); }
+      seg.dpending.delete(u); dirty = true; kick();
+    }).catch(() => { seg.dpending.delete(u); seg.dblobs[u] = undefined; seg.dget?.(u); });   // a bad body: fetch it again
   }
   function requestGop(seg, g) {
     const V = seg.vid;
@@ -400,28 +412,42 @@ export async function initRail({ canvas, segments, maxDpr = 2 }) {
   async function loadManifest(url) {
     const base = new URL(url, location.href);
     const m = await (await fetch(base)).json();
+    const ds = m.depthStrip || null, units = ds ? Math.ceil(m.frames / ds.frames) : m.frames;
     const s = { name: url, frames: m.frames, width: m.width, height: m.height, crop: m.crop, focus: m.focus ?? .35, poses: m.poses || null, fovV: m.fovV, near: m.near ?? .6,
-      blobs: new Array(m.frames), dblobs: new Array(m.frames), vid: null, dbm: new Map(), dpending: new Set() };
-    const path = (tpl, i) => new URL(tpl.replace('{i}', String(i).padStart(4, '0')), base).href;
+      blobs: new Array(m.frames), dblobs: new Array(units), vid: null, dbm: new Map(), dpending: new Set(), dstrip: ds, dunit: ds ? i => Math.floor(i / ds.frames) : i => i };
+    const path = (tpl, i, pad = 4) => new URL(tpl.replace('{i}', String(i).padStart(pad, '0')), base).href;
+    const dpath = u => ds ? path(ds.file, u, 3) : path(m.depth, u);
     if (m.video && 'VideoDecoder' in window) s.vid = await openVideo(m, base, s);
+    if (!s.vid && !m.color) throw new Error('rail: this browser cannot decode the film');   // site.js falls back to the still plate
     if (s.vid) {
       // depth stays per-frame lossless PNG; colour streams as GOP-aligned chunk files, first and last first
       // the hero frame's chunk and the hold frame's chunk come first; the flight between them streams only once the visitor
       // starts scrolling (nearest the film position first), so someone who reads the hero and leaves never pulls the film
       const nf = s.vid.files.length;
-      const get = async fi => { if (s.vid.buf[fi]) return; try { s.vid.buf[fi] = new Uint8Array(await (await fetch(new URL(s.vid.files[fi], base))).arrayBuffer()); pumpVideo(s); kick(); } catch { /* neighbours cover */ } };
+      const get = async fi => { if (s.vid.buf[fi]) return; try { s.vid.buf[fi] = new Uint8Array(await (await fetchOk(new URL(s.vid.files[fi], base))).arrayBuffer()); pumpVideo(s); kick(); } catch { /* neighbours cover */ } };
       (async () => { for (const fi of new Set([0, nf - 1])) await get(fi); })();
       addEventListener('scroll', async () => {
         const here = s.vid.frames[Math.max(0, Math.min(s.frames - 1, Math.round(seg === s ? f : 0)))][0];
         const order = [...Array(nf).keys()].sort((x, y) => Math.abs(x - here) - Math.abs(y - here) || x - y);
         for (const fi of order) await get(fi);
       }, { passive: true, once: true });
-      const order = [0, m.frames - 1]; const seen = new Set(order);
-      for (let st = 16; st >= 1; st >>= 1) for (let i = 0; i < m.frames; i += st) if (!seen.has(i)) { seen.add(i); order.push(i); }
-      const dget = async i => { if (s.dblobs[i]) return; try { s.dblobs[i] = await (await fetch(path(m.depth, i))).blob(); kick(); } catch { /* */ } };
-      // like the colour: the two ends now, the coarse-to-fine rest once the visitor scrolls
-      (async () => { for (const i of order.slice(0, 2)) await dget(i); })();
-      addEventListener('scroll', () => { const q = order.slice(2); Promise.all(Array.from({ length: 4 }, async () => { while (q.length) await dget(q.shift()); })); }, { passive: true, once: true });
+      // depth units (strips of GOP frames, or single frames in older manifests): the two ends now, the rest once the visitor
+      // scrolls, nearest the film position first. A unit that still fails after fetchOk's retries is tried again a while later,
+      // so one dropped CDN response can never leave a permanent hole in the warp.
+      const lastU = s.dunit(m.frames - 1), dtries = new Array(units).fill(0);
+      const dget = async u => {
+        if (s.dblobs[u] || dtries[u] > 3) return;
+        dtries[u]++;
+        try { s.dblobs[u] = await (await fetchOk(dpath(u))).blob(); kick(); }
+        catch { setTimeout(() => dget(u), 4000 * dtries[u]); }
+      };
+      s.dget = dget;
+      (async () => { for (const u of new Set([0, lastU])) await dget(u); })();
+      addEventListener('scroll', () => {
+        const here = s.dunit(Math.max(0, Math.min(s.frames - 1, Math.round(seg === s ? f : 0))));
+        const q = [...Array(units).keys()].sort((x, y) => Math.abs(x - here) - Math.abs(y - here) || x - y);
+        Promise.all(Array.from({ length: ds ? 3 : 4 }, async () => { while (q.length) await dget(q.shift()); }));
+      }, { passive: true, once: true });
       return s;
     }
     // fetch order: first and last frame, then coarse-to-fine strides, so a fast scroll always has something near
@@ -433,13 +459,23 @@ export async function initRail({ canvas, segments, maxDpr = 2 }) {
         while (q.length) {
           const i = q.shift();
           try {
-            const [c, d] = await Promise.all([fetch(path(m.color, i)), fetch(path(m.depth, i))]);
+            const [c, d] = await Promise.all([fetchOk(path(m.color, i)), fetchOk(path(m.depth, i))]);
             s.blobs[i] = await c.blob(); s.dblobs[i] = await d.blob(); kick();
           } catch { /* a missing frame falls back to its neighbours */ }
         }
       }));
     })();
     return s;
+  }
+}
+
+// fetch that treats an HTTP error as a failure and retries it with backoff (a CDN 503 on a cold load is normal); a 404 is final
+async function fetchOk(url, tries = 4) {
+  for (let t = 0; ; t++) {
+    let r = null;
+    try { r = await fetch(url); if (r.ok) return r; } catch { /* network: retry */ }
+    if ((r && r.status === 404) || t >= tries - 1) throw new Error(`rail fetch ${r ? r.status : 'failed'}: ${url}`);
+    await new Promise(z => setTimeout(z, 350 * 2 ** t + Math.random() * 250));
   }
 }
 
