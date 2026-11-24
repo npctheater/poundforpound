@@ -18,24 +18,24 @@ export async function initRail({ canvas, manifest = 'assets/rail/seg01/frames/ma
   });
   if (!marks.length) return null;
 
-  // Compute progress [0..1] across the hero + damage flight + Fight Night stop, plus visibility
+  // Compute continuous progress [0..1] across the full Hero -> #damage -> #fightnight corridor (zero dead stop)
+  const firstMark = marks[0];
+  const lastMark = marks[marks.length - 1];
   function readProgress() {
     const vh = innerHeight;
-    let found = null;
+    const topEl = firstMark.fromEl || firstMark.el;
+    const top = topEl.getBoundingClientRect().top;
+    const bot = lastMark.el.getBoundingClientRect().bottom;
+    if (bot <= vh * 0.15 || top >= vh) return null;
+    const span = Math.max(1, bot - top - vh);
+    const t = clamp01(-top / span);
+    // Smoothly interpolate dim value across whichever section currently occupies viewport center
+    let dim = firstMark.dim;
     for (const m of marks) {
       const r = m.el.getBoundingClientRect();
-      const top = m.fromEl ? Math.min(r.top, m.fromEl.getBoundingClientRect().top) : r.top;
-      const bottomEdge = m.kind === 'seg' ? 0 : vh * 0.25;
-      if (r.bottom <= bottomEdge || top >= vh) continue;
-      if (m.kind === 'seg') {
-        const span = Math.max(1, r.bottom - top - vh);
-        found = { t: clamp01(-top / span), dim: m.dim };
-        break;
-      } else if (!found) {
-        found = { t: 1, dim: m.dim };
-      }
+      if (r.top <= vh * 0.55 && r.bottom >= vh * 0.25) { dim = m.dim; break; }
     }
-    return found;
+    return { t, dim };
   }
 
   // ---------- MOBILE / TOUCH PARADIGM: pure GPU-composited stop-plate crossfade ----------
@@ -192,24 +192,37 @@ export async function initRail({ canvas, manifest = 'assets/rail/seg01/frames/ma
     }
   }
 
-  function draw(bm, dimVal) {
+  function drawBlended(bm0, bm1, frac, dimVal) {
     ensureSize();
     if (!W || !H) return;
-    // Tiny overscan + strictly clamped micro-pan (<= 5px regardless of aspect ratio) so mouse move never yanks the room
-    const overscan = reduce ? 1 : 1.008;
+    // Tiny overscan + strictly clamped micro-pan (<= 0.35% W/H) + subtle continuous dolly push between adjacent frames
+    const overscan = reduce ? 1 : 1.012;
     const canAspect = W / H;
-    const imgAspect = bm.width / bm.height;
-    let dw, dh;
-    if (canAspect > imgAspect) { dw = W * overscan; dh = dw / imgAspect; }
-    else { dh = H * overscan; dw = dh * imgAspect; }
-    const maxPanX = Math.min(Math.max(0, (dw - W) * 0.45), W * 0.0035);
-    const maxPanY = Math.min(Math.max(0, (dh - H) * 0.45), H * 0.0035);
+    const imgAspect = bm0.width / bm0.height;
+    let baseW, baseH;
+    if (canAspect > imgAspect) { baseW = W * overscan; baseH = baseW / imgAspect; }
+    else { baseH = H * overscan; baseW = baseH * imgAspect; }
+    const maxPanX = Math.min(Math.max(0, (baseW - W) * 0.45), W * 0.0035);
+    const maxPanY = Math.min(Math.max(0, (baseH - H) * 0.45), H * 0.0035);
     const panX = reduce ? 0 : -px * 2 * maxPanX;
     const panY = reduce ? 0 : -py * 2 * maxPanY;
-    const dx = (W - dw) * 0.5 + panX;
-    const dy = (H - dh) * 0.5 + panY;
 
-    ctx.drawImage(bm, dx, dy, dw, dh);
+    // Continuous sub-frame forward push (~0.45% per frame interval) keeps slow scrolling silky at 60-144Hz
+    const stepZoom = reduce || !bm1 || bm0 === bm1 ? 0 : 0.0045;
+    const s0 = 1 + frac * stepZoom;
+    const dw0 = baseW * s0, dh0 = baseH * s0;
+    ctx.globalAlpha = 1;
+    ctx.drawImage(bm0, (W - dw0) * 0.5 + panX, (H - dh0) * 0.5 + panY, dw0, dh0);
+
+    if (bm1 && bm1 !== bm0 && frac > 0.004) {
+      const a = frac * frac * (3 - 2 * frac); // smoothstep crossfade
+      const s1 = 1 - (1 - frac) * stepZoom;
+      const dw1 = baseW * s1, dh1 = baseH * s1;
+      ctx.globalAlpha = a;
+      ctx.drawImage(bm1, (W - dw1) * 0.5 + panX, (H - dh1) * 0.5 + panY, dw1, dh1);
+      ctx.globalAlpha = 1;
+    }
+
     if (dimVal > 0.01) {
       ctx.fillStyle = `rgba(11, 10, 12, ${clamp01(dimVal).toFixed(3)})`;
       ctx.fillRect(0, 0, W, H);
@@ -237,16 +250,16 @@ export async function initRail({ canvas, manifest = 'assets/rail/seg01/frames/ma
 
     fTarget = st.t * (N - 1);
     dimTarget = st.dim;
-    if (st.t > 0.005) startStream();
+    if (st.t > 0.003) startStream();
 
     if (reduce) {
       f = fTarget; fv = 0; dim = dimTarget; px = 0; py = 0;
     } else {
-      // Smooth critically-damped glide onto exact integer frames (zero blur/double-exposure)
-      const k = 110, c = 2 * Math.sqrt(k);
+      // Silky critically-damped dolly spring (smooth across slow wheel notches, crisp on fast flicks)
+      const k = 55, c = 2 * Math.sqrt(k);
       fv += (k * (fTarget - f) - c * fv) * dt;
       f += fv * dt;
-      if (Math.abs(fTarget - f) < 0.04 && Math.abs(fv) < 0.08) { f = Math.round(fTarget); fv = 0; }
+      if (Math.abs(fTarget - f) < 0.003 && Math.abs(fv) < 0.01) { f = fTarget; fv = 0; }
       dim += (dimTarget - dim) * Math.min(1, dt * 8);
       if (Math.abs(dimTarget - dim) < 0.003) dim = dimTarget;
       px += (tx - px) * Math.min(1, dt * 5);
@@ -255,20 +268,24 @@ export async function initRail({ canvas, manifest = 'assets/rail/seg01/frames/ma
       if (Math.abs(ty - py) < 0.001) py = ty;
     }
 
-    const idx = Math.max(0, Math.min(N - 1, Math.round(f)));
-    // Prioritize immediate neighbor if still loading
-    if (!bitmaps[idx]) fetchFrame(idx);
-    const bm = nearestBitmap(idx);
-    if (bm) {
-      const key = `${idx}:${Math.round(dim * 200)}:${Math.round(px * 400)}:${Math.round(py * 400)}:${W}x${H}`;
+    const fc = clamp(f, 0, N - 1);
+    const i0 = Math.floor(fc);
+    const i1 = Math.min(N - 1, i0 + 1);
+    const frac = fc - i0;
+    if (!bitmaps[i0]) fetchFrame(i0);
+    if (!bitmaps[i1]) fetchFrame(i1);
+    const bm0 = nearestBitmap(i0);
+    const bm1 = bitmaps[i1] || bm0;
+    if (bm0) {
+      const key = `${Math.round(fc * 40)}:${Math.round(dim * 200)}:${Math.round(px * 400)}:${Math.round(py * 400)}:${W}x${H}`;
       if (dirty || key !== lastDrawnKey) {
-        draw(bm, dim);
+        drawBlended(bm0, bm1, bm1 === bm0 ? 0 : frac, dim);
         lastDrawnKey = key;
         dirty = false;
       }
     }
 
-    const moving = Math.abs(fTarget - f) > 0.02 || Math.abs(fv) > 0.05 ||
+    const moving = Math.abs(fTarget - f) > 0.003 || Math.abs(fv) > 0.01 ||
       Math.abs(dimTarget - dim) > 0.002 || Math.abs(tx - px) > 0.001 || Math.abs(ty - py) > 0.001;
     if (moving || dirty) kick();
   }

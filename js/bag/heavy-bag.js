@@ -9,7 +9,7 @@ import * as THREE from 'three';
 import { buildHide, buildBagHardware, buildUpperChain, buildHookAndHoist, HOOK_PIN_Y, R as BAG_R } from './bag-geometry.js';
 import * as SIM from './bag-sim.js';
 import { VERT, FRAG } from './bag-shader.js';
-import { BagAudio } from './bag-audio.js';
+import { BagAudio } from './bag-audio.js?v=2';
 
 const HERE = new URL('.', import.meta.url);
 const DEFAULT_BASE = new URL('../../assets/bag/', HERE).href;
@@ -221,8 +221,12 @@ export function mountHeavyBag(container, opts = {}) {
       wasOverBag = !!h;
     });
     const up = () => { down = false; };
-    canvas.addEventListener('pointerup', () => audio.unlock());
-    canvas.addEventListener('touchend', () => audio.unlock(), { passive: true });
+    const unlockNow = () => audio.unlock();
+    canvas.addEventListener('touchstart', unlockNow, { passive: true });
+    canvas.addEventListener('touchend', unlockNow, { passive: true });
+    canvas.addEventListener('click', unlockNow);
+    canvas.addEventListener('pointerup', unlockNow);
+    window.addEventListener('touchstart', unlockNow, { passive: true, once: true });
     canvas.addEventListener('pointerup', up); canvas.addEventListener('pointercancel', up); canvas.addEventListener('pointerleave', up);
 
     // ---------- the hit (HeavyBagPresenter.ApplyCapturedPunch)

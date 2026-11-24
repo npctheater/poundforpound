@@ -106,7 +106,7 @@ import('./panels.js?v=25').then((m) => m.initPanels()).catch((err) => console.wa
     const o = new IntersectionObserver(([e]) => {
       if (e.isIntersecting) {
         o.disconnect();
-        import('./bag/heavy-bag.js?v=3')
+        import('./bag/heavy-bag.js?v=4')
           .then(({ mountHeavyBag }) => mountHeavyBag(mountEl, { lazy: false, readout: false, maxPixelRatio: coarse ? 1.5 : 1.75 }))
           .catch((err) => console.warn('heavy bag unavailable', err));
       }
@@ -120,7 +120,7 @@ const startGymUI = () => import('./gymui.js?v=3').then((m) => m.initGymUI()).cat
 if (document.readyState === 'complete') startGymUI(); else addEventListener('load', startGymUI, { once: true });
 
 // ---------- the rail: artifact-free night-gym flythrough (zero depth-warp, zero WebGL, 0 idle rAF) ----------
-import('./rail.js?v=30').then(({ initRail }) => initRail({
+import('./rail.js?v=31').then(({ initRail }) => initRail({
   canvas: document.getElementById('rail'),
   manifest: 'assets/rail/seg01/frames/manifest.json',
   maxDpr: 1.5,

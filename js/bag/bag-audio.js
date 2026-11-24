@@ -36,17 +36,22 @@ export class BagAudio {
   async init() {
     const AC = window.AudioContext || window.webkitAudioContext;
     if (!AC) return;
+    if (navigator.audioSession) { try { navigator.audioSession.type = 'playback'; } catch (_) {} }
     const ctx = this.ctx = new AC({ latencyHint: 'interactive' });
     const [idx, hits, chain] = await Promise.all([
       fetch(this.base + 'bag_audio.json').then((r) => r.json()),
       fetch(this.base + 'bag_hits.m4a').then((r) => r.arrayBuffer()),
       fetch(this.base + 'bag_chain.m4a').then((r) => r.arrayBuffer()),
     ]);
-    const dec = (ab) => new Promise((res, rej) => ctx.decodeAudioData(ab, res, rej));
+    const dec = (ab) => new Promise((res, rej) => ctx.decodeAudioData(ab.slice(0), res, rej));
     [this.hitBuf, this.chainBuf] = await Promise.all([dec(hits), dec(chain)]);
     this.idx = idx;
     this._buildGraph();
     this.ready = true;
+    if (this.pending && this.ctx.state === 'running' && performance.now() - this.pending.t < 900) {
+      const p = this.pending; this.pending = null;
+      this.hit(p.damage);
+    }
   }
 
   _buildGraph() {
@@ -110,11 +115,32 @@ export class BagAudio {
   }
 
   unlock() {
+    if (navigator.audioSession) { try { navigator.audioSession.type = 'playback'; } catch (_) {} }
     if (!this.ctx) return Promise.resolve(false);
-    if (this.ctx.state === 'running') return Promise.resolve(true);
+    // On iOS Safari, playing a 1-sample silent buffer + tiny silent HTML5 audio clip synchronously inside a
+    // touch/click gesture reliably wakes hardware output even when the iPhone ringer switch is set to silent.
+    if (!this._primed) {
+      this._primed = true;
+      try {
+        const b = this.ctx.createBuffer(1, 1, 22050);
+        const s = this.ctx.createBufferSource();
+        s.buffer = b; s.connect(this.ctx.destination); s.start(0);
+      } catch (_) {}
+      try {
+        const a = document.createElement('audio');
+        a.setAttribute('playsinline', '');
+        a.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
+        a.play().catch(() => {});
+      } catch (_) {}
+    }
+    if (this.ctx.state === 'running') {
+      const p = this.pending; this.pending = null;
+      if (p && this.ready && performance.now() - p.t < 900) this.hit(p.damage);
+      return Promise.resolve(true);
+    }
     return this.ctx.resume().then(() => {
       const p = this.pending; this.pending = null;
-      if (p && performance.now() - p.t < 600) this.hit(p.damage);
+      if (p && this.ready && performance.now() - p.t < 900) this.hit(p.damage);
       return true;
     }, () => false);
   }
@@ -122,7 +148,7 @@ export class BagAudio {
     this.muted = m;
     if (this.master) this.master.gain.setTargetAtTime(m ? 0 : MASTER, this.ctx.currentTime, 0.02);
   }
-  get live() { return this.ready && !this.muted && this.ctx.state === 'running'; }
+  get live() { return this.ready && !this.muted && this.ctx && this.ctx.state === 'running'; }
 
   _voice(buf, startS, durS, when, rate, gainLin, sends) {
     const ctx = this.ctx, src = ctx.createBufferSource();
@@ -149,9 +175,9 @@ export class BagAudio {
   // damage 0..100 (the game's bag damage). Plays impact + room + chain burst.
   hit(damage) {
     if (!this.live) {
-      // a touch pointerdown is not a user gesture, so the context may still be suspended on the very first tap; keep
-      // that hit and play it the moment pointerup/touchend unlocks the audio
-      if (this.ready && !this.muted && this.ctx && this.ctx.state !== 'running') this.pending = { damage, t: performance.now() };
+      // On phones, pointerdown may precede gesture unlock or audio decode; queue the hit so unlock()/init() fires it.
+      if (!this.muted) this.pending = { damage, t: performance.now() };
+      this.unlock();
       return;
     }
     const ctx = this.ctx, now = ctx.currentTime;
