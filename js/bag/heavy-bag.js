@@ -138,9 +138,8 @@ export function mountHeavyBag(container, opts = {}) {
 
     // ---------- layout
     let W = 1, Hh = 1;
-    // world Y kept in frame: the 1.52 m bag fills ~65% of the stage, centred, and its chain runs up off the top
-    // (you are standing at the bag, not looking at the whole rig from across the gym)
-    const framing = { lo: 0.758 - 1.17, hi: 0.758 + 1.17 };
+    // world Y kept in frame: the 1.52 m bag fills the stage cleanly with chains running past the top edge (no cut-off hook)
+    const framing = { lo: 0.758 - 0.96, hi: 0.758 + 0.96 };
     const camBase = new THREE.Vector3(), camTarget = new THREE.Vector3(), camRight = new THREE.Vector3(Math.cos(CAM_YAW), 0, -Math.sin(CAM_YAW));
     function layout() {
       const r = container.getBoundingClientRect();
@@ -288,7 +287,7 @@ export function mountHeavyBag(container, opts = {}) {
     // key: the ring spot (warm, from above, leaning in from camera-left); keyAz is degrees from the camera's view, - = left
     // (low and raking so the satin sheen runs down the barrel and the dent and ripple catch it)
     const look = { exposure: o.exposure, key: 3.0, keyAz: -70, keyEl: 16 };
-    let visible = true, running = false, last = 0, dirty = true, awakeUntil = performance.now() + 1500;
+    let visible = false, running = false, last = 0, dirty = true, awakeUntil = performance.now() + 500;
     let frames = 0, fpsAcc = 0, fps = 0;
 
     let manual = false;                          // debug: frozen clock, advanced by _debug.advance(dt) (clip capture)
@@ -361,7 +360,10 @@ export function mountHeavyBag(container, opts = {}) {
     const origDirtyKick = () => { if (!running) { last = 0; kick(); } };
     canvas.addEventListener('pointermove', origDirtyKick);
     canvas.addEventListener('pointerdown', origDirtyKick);
-    const vis = new IntersectionObserver((es) => { visible = es[es.length - 1].isIntersecting; if (visible) { last = 0; kick(); } }, { rootMargin: '60px' });
+    const vis = new IntersectionObserver((es) => {
+      visible = es[es.length - 1].isIntersecting;
+      if (visible) { last = 0; dirty = true; kick(); }
+    }, { rootMargin: '40px' });
     vis.observe(container);
     const onVis = () => { if (!document.hidden) { last = 0; kick(); } };
     document.addEventListener('visibilitychange', onVis);

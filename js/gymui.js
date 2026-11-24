@@ -36,8 +36,8 @@ const EYE = 1000;                                   // camera distance in CSS px
 const KIND = {
   pad:       { leather: 'black', roll: .075, puff: .17, hz: 4.2, zeta: .6,  lift: 2,   tiltH: 5.5, tiltP: 8,  sink: 4.5, flat: .5,  dent: 2.6, sway: 0,  rivets: false },
   'pad-red': { leather: 'red',   roll: .075, puff: .17, hz: 4.2, zeta: .6,  lift: 2,   tiltH: 5.5, tiltP: 8,  sink: 4.5, flat: .5,  dent: 2.6, sway: 0,  rivets: false },
-  cta:       { leather: 'red',   roll: .075, puff: .21, hz: 2.6, zeta: .62, lift: 3,   tiltH: 5,   tiltP: 7,  sink: 7,   flat: .8,  dent: 5,   sway: 1,  rivets: true },
-  plate:     { leather: 'black', roll: .075, puff: .14, hz: 3.2, zeta: .62, lift: 1.5, tiltH: 3.5, tiltP: 5,  sink: 3.5, flat: .4,  dent: 3,   sway: .6, rivets: true },
+  cta:       { leather: 'red',   roll: .075, puff: .21, hz: 2.6, zeta: .62, lift: 3,   tiltH: 5,   tiltP: 7,  sink: 7,   flat: .8,  dent: 5,   sway: 0,  rivets: true },
+  plate:     { leather: 'black', roll: .075, puff: .14, hz: 3.2, zeta: .62, lift: 1.5, tiltH: 3.5, tiltP: 5,  sink: 3.5, flat: .4,  dent: 3,   sway: 0,  rivets: true },
 };
 // lab layout.json params (leather / red / tape / metal), satin values
 const MAT = {
@@ -381,7 +381,9 @@ const CSS = `
 .g3d{position:relative}
 .g3d-on{-webkit-tap-highlight-color:transparent}
 .g3d>.g3d-cv{position:absolute;pointer-events:none;z-index:1;display:block}
-.g3d-on.pad,.g3d-on.pad:hover,.g3d-on.pad:active{background:none!important;box-shadow:none!important;transform:none!important;filter:none!important}
+.g3d-on.pad{background:none!important;box-shadow:none!important;filter:none!important;transition:transform .16s cubic-bezier(.2,.9,.3,1.3),filter .16s ease!important}
+.g3d-on.pad:hover{background:none!important;box-shadow:none!important;transform:translateY(-2px)!important;filter:brightness(1.08)!important}
+.g3d-on.pad:active{background:none!important;box-shadow:none!important;transform:translateY(1px) scale(.975)!important;filter:brightness(.96)!important}
 .g3d-on.pad::before{display:none}
 .g3d-on .tape{opacity:0!important}
 .kicker.g3d-plate{display:inline-flex;align-items:center;gap:12px;font:400 27px/1 var(--display,Anton,sans-serif);letter-spacing:.05em;color:var(--cream,#f3ead8);padding:11px 24px 10px 24px;margin-bottom:22px;border-radius:10px}
@@ -470,9 +472,9 @@ export async function initGymUI(opts = {}) {
         uB: { value: 10 }, uR: { value: 4 }, uKey: { value: key }, uHalf: { value: new THREE.Vector2(1, 1) }, uGlow: { value: 0 },
         uPtr: { value: new THREE.Vector4(0, 0, 20, 0) },
       };
-      this.listen();
+      this.listen = () => {};
     }
-    listen() {
+    _unused_listen() {
       const h = this.host, o = { passive: true };
       const local = (e) => {
         const r = h.getBoundingClientRect();
@@ -621,7 +623,7 @@ export async function initGymUI(opts = {}) {
           } else {
             const iw = w - 2 * dim.stitch, ih = h - 2 * dim.stitch;
             th = ih * (h < 40 ? 0.7 : 0.6);
-            fpx = th * 0.86;                                 // Anton's caps stand ~0.73 em: the print fills ~62% of the tape
+            fpx = th * (this.host.classList.contains('mode-pad') && w < 140 ? 0.58 : 0.86);
             textW = measure(fpx);
             const padX = Math.max(5, th * 0.42), maxW = iw * (h < 40 ? 0.9 : 0.84);
             if (textW + 2 * padX > maxW) { fpx *= (maxW - 2 * padX) / textW; textW = measure(fpx); }
@@ -859,38 +861,38 @@ export async function initGymUI(opts = {}) {
     if ((any || wokeInFrame) && !document.hidden) raf = requestAnimationFrame(frame);
   }
 
-  hosts.forEach((h, i) => pads.push(new Pad(h, i)));
-  const io = new IntersectionObserver((es) => {
-    for (const e of es) { const p = pads.find((q) => q.host === e.target); if (p) { p.visible = e.isIntersecting; if (p.visible) { p.dirty = true; wake(); } else if (p.cv.width) { p.cv.width = 0; p.cv.height = 0; } } }   // off screen: free the canvas backing (GPU memory), redraw on return
-  }, { rootMargin: '250px 0px' });
-  const ro = new ResizeObserver((es) => {
-    for (const e of es) {
-      const p = pads.find((q) => q.host === e.target); if (!p) continue;
-      const w = e.target.offsetWidth, h = e.target.offsetHeight;
-      if (Math.abs(w - (p.w || 0)) > 0.5 || Math.abs(h - (p.h || 0)) > 0.5) { p.needsBuild = true; p.dirty = true; }
-    }
-    wake();
+  hosts.forEach((h, i) => {
+    const p = new Pad(h, i);
+    // Bake once in a single quick pass then release the WebGL context immediately (0 persistent GL contexts, 0 idle rAF)
+    pads.push(p);
   });
-  pads.forEach((p) => { io.observe(p.host); ro.observe(p.host); });
-  // after a reveal / layout transition settles, re-snap to whole device pixels
-  const onTransEnd = (e) => { for (const p of pads) if (p.built && e.target.contains(p.host)) { p.align(); wake(); } };
-  document.addEventListener('transitionend', onTransEnd, { passive: true });
-  const onResize = () => { const d = dprNow(); if (d !== dpr) { dpr = d; pads.forEach((p) => { p.needsBuild = true; }); } else pads.forEach((p) => p.built && p.align()); wake(); };
-  addEventListener('resize', onResize, { passive: true });
-  const onVis = () => { if (!document.hidden) wake(); };
-  document.addEventListener('visibilitychange', onVis);
-  const lost = (e) => { e.preventDefault(); destroy(); };
-  glCanvas.addEventListener('webglcontextlost', lost);
-  // fonts that arrive late change label metrics: rebuild once they are in
-  document.fonts.ready.then(() => { pads.forEach((p) => { if (p.built) p.needsBuild = true; }); wake(); });
+  function bakeAll() {
+    for (const p of pads) {
+      if (p.failed) continue;
+      const w = p.host.offsetWidth, h = p.host.offsetHeight;
+      if (w < 2 || h < 2) continue;
+      try {
+        p.build();
+        p.render();
+        p.disposeGL();
+      } catch (err) {
+        p.failed = true; p.cv.remove(); p.host.classList.remove('g3d-on', 'g3d-plate');
+        console.warn('gym UI pad fell back to CSS', err);
+      }
+    }
+    // Release the WebGL2 context immediately so active WebGL contexts stay strictly <= 1 across the site
+    try {
+      for (const t of [tex.black, tex.red, tex.det, blankInk]) t.dispose();
+      renderer.forceContextLoss();
+      renderer.dispose();
+    } catch { /* already disposed */ }
+  }
+  bakeAll();
 
   function destroy() {
     alive = false; if (raf) cancelAnimationFrame(raf);
-    io.disconnect(); ro.disconnect();
-    document.removeEventListener('transitionend', onTransEnd); removeEventListener('resize', onResize); document.removeEventListener('visibilitychange', onVis);
     for (const p of pads) { p.disposeGL(); p.cv.remove(); p.host.classList.remove('g3d', 'g3d-on', 'g3d-plate'); }
-    renderer.dispose();
+    try { renderer.dispose(); } catch { /* noop */ }
   }
-  wake();
-  return { pads, destroy, renderer };
+  return { pads, destroy, renderer: null };
 }

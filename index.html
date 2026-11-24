@@ -4,42 +4,31 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Pound for Pound · VR boxing for Meta Quest</title>
-<meta name="description" content="Pound for Pound is VR boxing that finally rewards real boxing. Real form lands; the old VR boxing exploits don't. Coming soon to Meta Quest.">
+<meta name="description" content="Pound for Pound is VR boxing for Meta Quest. Physics-graded punches, reactive opponents, heavy bag, and coached drills. Coming soon.">
 <meta name="theme-color" content="#0b0a0c">
 <meta property="og:title" content="Pound for Pound · VR boxing for Meta Quest">
-<meta property="og:description" content="VR boxing that finally rewards real boxing. Coming soon to Meta Quest.">
+<meta property="og:description" content="Real boxing on Meta Quest. Physics-graded punches, reactive opponents, heavy bag, and coached drills.">
 <meta property="og:image" content="https://poundforpoundvr.com/img/gal-cover.webp">
 <meta property="og:url" content="https://poundforpoundvr.com/">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="img/icon-192.png">
 <link rel="apple-touch-icon" href="img/logo-180.png">
 <link rel="preload" href="fonts/Anton-Regular.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="preload" href="img/hero-rail0.webp" as="image">
-<link rel="stylesheet" href="css/site.css?v=38">
+<link rel="preload" href="img/hero-rail0.webp" as="image" media="(min-width: 821px)">
+<link rel="preload" href="img/rail-m0.webp" as="image" media="(max-width: 820px)">
+<link rel="stylesheet" href="css/site.css?v=46">
 <script type="importmap">{"imports":{"three":"./vendor/three/three.module.min.js","three/addons/":"./vendor/three/addons/"}}</script>
 </head>
 <body>
-<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><filter id="chalk" x="-5%" y="-10%" width="110%" height="120%">
-  <feTurbulence type="fractalNoise" baseFrequency="1.1" numOctaves="2" seed="4" result="n"/>
-  <feColorMatrix in="n" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -2.4 1.75" result="grain"/>
-  <feComposite in="SourceGraphic" in2="grain" operator="in" result="t"/>
-  <feDisplacementMap in="t" in2="n" scale="1.4" xChannelSelector="R" yChannelSelector="G"/>
-</filter>
-<filter id="chalk-text" x="-5%" y="-20%" width="110%" height="140%">
-  <feTurbulence type="fractalNoise" baseFrequency="1.3" numOctaves="2" seed="7" result="n"/>
-  <feColorMatrix in="n" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -1.5 2.05" result="grain"/>
-  <feComposite in="SourceGraphic" in2="grain" operator="in" result="t"/>
-  <feDisplacementMap in="t" in2="n" scale="1.1" xChannelSelector="R" yChannelSelector="G"/>
-</filter></svg>
 
 <a class="skip" href="#main">Skip to content</a>
 
 <header class="nav" id="top">
   <a class="nav-brand" href="#top" aria-label="Pound for Pound, back to top"><img src="img/logo-rim-sm.webp" alt="" width="40" height="49"></a>
-  <button class="pad pad-sm nav-menu" type="button" aria-expanded="false" aria-controls="nav-sections"><span class="tape">Menu</span></button>
+  <button class="pad pad-sm nav-menu" data-gym3d="pad" type="button" aria-expanded="false" aria-controls="nav-sections"><span class="tape">Menu</span></button>
   <nav aria-label="Sections" id="nav-sections">
-    <a class="pad pad-sm" data-gym3d="pad" href="#damage"><span class="tape">Damage</span></a>
-    <!-- Fighters returns with the section once the gloved posters are listed -->
+    <a class="pad pad-sm" data-gym3d="pad" href="#damage"><span class="tape">Grading</span></a>
+    <a class="pad pad-sm" data-gym3d="pad" href="#fighters"><span class="tape">Fighters</span></a>
     <a class="pad pad-sm" data-gym3d="pad" href="#bag"><span class="tape">Heavy bag</span></a>
     <a class="pad pad-sm" data-gym3d="pad" href="#gallery"><span class="tape">Gallery</span></a>
     <a class="pad pad-sm" data-gym3d="pad" href="#support"><span class="tape">Support</span></a>
@@ -50,12 +39,12 @@
 <canvas class="rail-canvas" id="rail" aria-hidden="true"></canvas>
 <main id="main">
 
-<!-- HERO: stands in the gym itself. The rail canvas shows frame 0 behind it and the first scroll starts the camera. -->
+<!-- HERO -->
 <section class="hero" aria-labelledby="hero-title">
-  <div class="hero-copy" data-rail-pool=".72" data-rail-keep=".463 .34 .543 .665">
+  <div class="hero-copy">
     <img class="hero-logo" src="img/logo-rim.webp" alt="Pound for Pound" width="720" height="877">
-    <h1 id="hero-title">VR boxing that finally rewards <em>real&nbsp;boxing.</em></h1>
-    <div class="hero-board" data-panel-phone="fightcard"><p class="lede">Real form lands. Flailing doesn't. This game can tell the difference.</p></div>
+    <h1 id="hero-title">Real boxing, in <em>your&nbsp;room.</em></h1>
+    <p class="lede">Physics-graded punches, reactive opponents, heavy bag work, and coached drills for Meta Quest.</p>
     <div class="cta-row">
       <a class="pad pad-red pad-lg" data-gym3d="cta" href="https://www.meta.com/experiences/1215417611661613/" rel="noopener"><span class="tape">Wishlist on Meta Quest</span></a>
       <span class="soon">Coming soon to Meta&nbsp;Quest</span>
@@ -63,236 +52,231 @@
   </div>
 </section>
 
-<!-- THE RAIL: you fly through the gym as you scroll (baked frames + depth on the fixed canvas behind) -->
-<section class="rail-seg" id="damage" data-rail="seg:flight" data-rail-from=".hero" data-rail-dim="0.18" aria-labelledby="damage-title">
+<!-- 01 PUNCH GRADING -->
+<section class="rail-seg" id="damage" data-rail="seg:flight" data-rail-from=".hero" data-rail-dim="0.22" aria-labelledby="damage-title">
   <div class="rail-slot">
-  <div class="rail-card rail-card-head reveal" data-panel="board">
-    <p class="kicker" data-gym3d="plate"><span class="num">01</span> Real form</p>
-    <h2 id="damage-title">You can't fake a punch&nbsp;here.</h2>
-    <p class="lede-sm">Pound for Pound reads your whole body and knows when you throw a real power punch with real form. Everything else just bounces off.</p>
-  </div>
+    <div class="rail-card rail-card-head" data-panel="board">
+      <p class="kicker" data-gym3d="plate"><span class="num">01</span> Punch grading</p>
+      <h2 id="damage-title">How punches&nbsp;score</h2>
+      <p class="lede-sm">Damage depends on mechanics, commitment, and target. Clean shots to the chin, liver, or open body carry weight; loose slaps and wrist flicks register for very little.</p>
+    </div>
   </div>
 
   <div class="chalk-hold rail-slot">
-  <div class="rail-card rail-card-plague reveal" data-panel="chalkboard">
-    <p class="plague-title">The tricks that plagued VR boxing</p>
-    <ul class="plague">
-      <li class="ko"><span>Arm-only hooks</span></li>
-      <li class="ko"><span>Arm-wrestler hooks</span></li>
-      <li class="ko"><span>Grabby hooks</span></li>
-      <li class="ko"><span>Flail spam</span></li>
-      <li class="ko"><span>Head-bob tricks</span></li>
-      <li class="ko"><span>Jumping and running around</span></li>
-    </ul>
-    <p class="plague-foot">Knocked out. None of them land here.</p>
-  </div>
+    <div class="rail-card rail-card-plague" data-panel="chalkboard">
+      <p class="plague-title">Filtered out</p>
+      <ul class="plague">
+        <li class="ko"><span>Arm-only hooks</span></li>
+        <li class="ko"><span>Wrist-flick punches</span></li>
+        <li class="ko"><span>Stiff-arm hooks</span></li>
+        <li class="ko"><span>Flail spam</span></li>
+        <li class="ko"><span>Head-bob exploits</span></li>
+        <li class="ko"><span>Jumping and running</span></li>
+      </ul>
+    </div>
   </div>
 
   <div class="rail-slot">
-  <div class="rail-card rail-card-form reveal" data-panel="taped">
-    <div class="form-readout" aria-hidden="true"><span class="fr-ok">Form ✓</span></div>
-    <h2>Clean form. Lands hard.</h2>
-    <p class="lede-sm">Nothing exaggerated, nothing to game. Throw a real punch, with your legs and hips behind it, and it hits like one.</p>
-  </div>
-  </div>
-</section>
-
-<!-- STOP: Fight Night. The rail holds on the ring; the fight player mounts here (clips + hurt-zone map). -->
-<section class="rail-stop" id="fightnight" data-rail="hold:flight" data-rail-dim="0.05" aria-labelledby="fn-title">
-  <div class="fn-mount" id="fn-mount" aria-label="Fight Night: tap the opponent where you want to land"></div>
-  <div class="rail-card rail-card-fn reveal" data-panel="fightcard">
-    <p class="kicker" data-gym3d="plate"><span class="num">02</span> Best-in-class single player</p>
-    <h2 id="fn-title">An opponent that boxes&nbsp;back.</h2>
-    <p class="lede-sm">Built from real boxers' motion, your opponent slips, blocks and rolls with your punches. They read your habits, punish a dropped guard, and change their game as the fight wears on.</p>
-    <p class="fn-soon">Fight Night demo: tap him where you want to land. <span>Arriving shortly.</span></p>
+    <div class="rail-card rail-card-form" data-panel="taped">
+      <h2>Combinations and&nbsp;counters</h2>
+      <p class="lede-sm">Clean combinations build damage across an exchange, and catching an opponent mid-punch counts as a counter.</p>
+    </div>
   </div>
 </section>
 
-<div class="rope rope-blue" aria-hidden="true"></div>
+<!-- 02 SINGLE PLAYER -->
+<section class="rail-stop" id="fightnight" data-rail="hold:flight" data-rail-dim="0.08" aria-labelledby="fn-title">
+  <div class="fn-mount" id="fn-mount" aria-hidden="true"></div>
+  <div class="rail-card rail-card-fn" data-panel="fightcard">
+    <p class="kicker" data-gym3d="plate"><span class="num">02</span> Single player</p>
+    <h2 id="fn-title">An opponent that boxes&nbsp;back</h2>
+    <p class="lede-sm">Animated from real boxers' motion, opponents slip, block, and roll with incoming punches. They track your patterns, punish an open guard, and adjust across rounds, from Easy to Expert.</p>
+  </div>
+</section>
 
-<!-- 03 BODY TRACKING: real recorded fights replayed with the tracked body (videos land in assets/video/) -->
+<!-- 03 FULL-BODY PRESENCE & GAMEPLAY CLIPS -->
 <section class="sec sec-body" id="body" aria-labelledby="body-title">
-  <div class="sec-head reveal" data-rail-pool=".55">
-    <p class="kicker" data-gym3d="plate"><span class="num">03</span> Body tracking</p>
-    <h2 id="body-title">How does it know? <span class="dim">It sees all of&nbsp;you.</span></h2>
-    <p class="sub">Revolutionary new body tracking puts your whole body in the ring, from nothing more than your headset and two controllers. It's what tells a real power punch from a fake one.</p>
+  <div class="sec-head">
+    <p class="kicker" data-gym3d="plate"><span class="num">03</span> In the ring</p>
+    <h2 id="body-title">Full-body presence</h2>
+    <p class="sub">Your headset and two Touch controllers drive a full-body boxer in the ring, matching your stance, weight shift, and rotation without extra trackers.</p>
   </div>
   <div class="videos">
-    <figure class="vid vid-hero reveal">
+    <figure class="vid vid-hero">
       <video muted loop playsinline preload="none" poster="img/gal-pov.webp" data-src="assets/video/hero.mp4"></video>
-      <figcaption>Real recorded fights, replayed in the gym with the player's tracked body.</figcaption>
+      <figcaption>Recorded fights replayed in the gym using the player's own body motion.</figcaption>
     </figure>
-    <figure class="vid reveal"><video muted loop playsinline preload="none" poster="img/gal-exchange.webp" data-src="assets/video/clip1.mp4"></video></figure>
-    <figure class="vid reveal"><video muted loop playsinline preload="none" poster="img/pov-liang.webp" data-src="assets/video/clip2.mp4"></video></figure>
-    <figure class="vid reveal"><video muted loop playsinline preload="none" poster="img/gal-neon.webp" data-src="assets/video/clip3.mp4"></video></figure>
+    <figure class="vid"><video muted loop playsinline preload="none" poster="img/gal-exchange.webp" data-src="assets/video/clip1.mp4"></video></figure>
+    <figure class="vid"><video muted loop playsinline preload="none" poster="img/pov-liang.webp" data-src="assets/video/clip2.mp4"></video></figure>
+    <figure class="vid"><video muted loop playsinline preload="none" poster="img/gal-neon.webp" data-src="assets/video/clip3.mp4"></video></figure>
   </div>
 </section>
 
-<div class="rope rope-blue" aria-hidden="true"></div>
-
-<!-- 04 FIGHTERS: gloved in-game fighter-select posters (re-filmed 2026-11-24) -->
-<section class="sec sec-fighters" id="fighters" aria-labelledby="fighters-title">
-  <div class="sec-head reveal" data-rail-pool=".55">
-    <p class="kicker" data-gym3d="plate"><span class="num">04</span> The fighters</p>
-    <h2 id="fighters-title">Pick your fighter.</h2>
-    <p class="sub">Three boxers, three styles, straight off the fighter-select wall.</p>
-  </div>
-  <div class="poster-wall" id="poster-wall">
-    <div class="wall-lamp" aria-hidden="true"></div>
-    <figure class="bay" data-poster="cole" tabindex="0" aria-label="Cole, The All-American">
-      <div class="bay-film">
-        <video class="bay-idle" muted loop playsinline preload="none" aria-hidden="true"></video>
-        <video class="bay-open" muted playsinline preload="none" aria-hidden="true"></video>
-      </div>
-      <figcaption class="bay-plate">
-        <span class="tape tape-l" aria-hidden="true"></span><span class="tape tape-r" aria-hidden="true"></span>
-        <h3>Cole</h3>
-        <p class="ribbon">The All-American</p>
-        <p class="style"><b>Balanced</b> Adaptable · Complete</p>
-        <p class="desc">A complete boxer. Sharp fundamentals, steady pressure, and an answer at every range.</p>
-      </figcaption>
-    </figure>
-    <figure class="bay" data-poster="malik" tabindex="0" aria-label="Malik, The Mauler">
-      <div class="bay-film">
-        <video class="bay-idle" muted loop playsinline preload="none" aria-hidden="true"></video>
-        <video class="bay-open" muted playsinline preload="none" aria-hidden="true"></video>
-      </div>
-      <figcaption class="bay-plate">
-        <span class="tape tape-l" aria-hidden="true"></span><span class="tape tape-r" aria-hidden="true"></span>
-        <h3>Malik</h3>
-        <p class="ribbon">The Mauler</p>
-        <p class="style"><b>Close range</b> Pressure · Combinations</p>
-        <p class="desc">A relentless inside fighter. Slip the first shot, close the distance, and make every exchange count.</p>
-      </figcaption>
-    </figure>
-    <figure class="bay" data-poster="liang" tabindex="0" aria-label="Liang, The Phantom">
-      <div class="bay-film">
-        <video class="bay-idle" muted loop playsinline preload="none" aria-hidden="true"></video>
-        <video class="bay-open" muted playsinline preload="none" aria-hidden="true"></video>
-      </div>
-      <figcaption class="bay-plate">
-        <span class="tape tape-l" aria-hidden="true"></span><span class="tape tape-r" aria-hidden="true"></span>
-        <h3>Liang</h3>
-        <p class="ribbon">The Phantom</p>
-        <p class="style"><b>Long range</b> Jab · Timing</p>
-        <p class="desc">A patient outside boxer. A probing jab, precise counters, and space that always feels just out of reach.</p>
-      </figcaption>
-    </figure>
+<!-- 04 FIGHTERS (backed by verified stopPosterSouthE plate) -->
+<section class="sec-bleed sec-fighters" id="fighters" aria-labelledby="fighters-title">
+  <div class="sec-inner">
+    <div class="sec-head">
+      <p class="kicker" data-gym3d="plate"><span class="num">04</span> Roster</p>
+      <h2 id="fighters-title">Three fighters</h2>
+      <p class="sub">Three playable fighters at launch, each with a distinct boxing style.</p>
+    </div>
+    <div class="poster-wall" id="poster-wall">
+      <div class="wall-lamp" aria-hidden="true"></div>
+      <figure class="bay" data-poster="cole" tabindex="0" aria-label="Cole, The All-American">
+        <div class="bay-film">
+          <img class="bay-still" src="assets/posters/cole/still.webp" alt="Cole in guard" width="540" height="810" loading="lazy" decoding="async">
+          <video class="bay-idle" muted loop playsinline preload="none" aria-hidden="true"></video>
+          <video class="bay-open" muted playsinline preload="none" aria-hidden="true"></video>
+        </div>
+        <figcaption class="bay-plate">
+          <span class="tape tape-l" aria-hidden="true"></span><span class="tape tape-r" aria-hidden="true"></span>
+          <h3>Cole</h3>
+          <p class="ribbon">The All-American</p>
+          <p class="style"><b>Balanced</b> All ranges</p>
+          <p class="desc">Orthodox fundamentals with steady pressure at mid-range.</p>
+        </figcaption>
+      </figure>
+      <figure class="bay" data-poster="malik" tabindex="0" aria-label="Malik, The Mauler">
+        <div class="bay-film">
+          <img class="bay-still" src="assets/posters/malik/still.webp" alt="Malik in guard" width="540" height="810" loading="lazy" decoding="async">
+          <video class="bay-idle" muted loop playsinline preload="none" aria-hidden="true"></video>
+          <video class="bay-open" muted playsinline preload="none" aria-hidden="true"></video>
+        </div>
+        <figcaption class="bay-plate">
+          <span class="tape tape-l" aria-hidden="true"></span><span class="tape tape-r" aria-hidden="true"></span>
+          <h3>Malik</h3>
+          <p class="ribbon">The Mauler</p>
+          <p class="style"><b>Inside fighter</b> Pressure</p>
+          <p class="desc">Works forward behind a tight guard with short hooks and body shots.</p>
+        </figcaption>
+      </figure>
+      <figure class="bay" data-poster="liang" tabindex="0" aria-label="Liang, The Phantom">
+        <div class="bay-film">
+          <img class="bay-still" src="assets/posters/liang/still.webp" alt="Liang in guard" width="540" height="810" loading="lazy" decoding="async">
+          <video class="bay-idle" muted loop playsinline preload="none" aria-hidden="true"></video>
+          <video class="bay-open" muted playsinline preload="none" aria-hidden="true"></video>
+        </div>
+        <figcaption class="bay-plate">
+          <span class="tape tape-l" aria-hidden="true"></span><span class="tape tape-r" aria-hidden="true"></span>
+          <h3>Liang</h3>
+          <p class="ribbon">The Phantom</p>
+          <p class="style"><b>Outside boxer</b> Distance</p>
+          <p class="desc">Fights behind a long jab and counters opponents stepping in.</p>
+        </figcaption>
+      </figure>
+    </div>
   </div>
 </section>
 
-<!-- BAG -->
-<section class="sec sec-bag" id="bag" aria-labelledby="bag-title">
-  <div class="sec-head reveal" data-rail-pool=".55">
-    <p class="kicker" data-gym3d="plate">Try it</p>
-    <h2 id="bag-title">Give it a hit.</h2>
-    <p class="sub">The same heavy bag from the game: the same thud, the same chain rattle, the same swing. Click or tap it, or swipe straight through.</p>
+<!-- 05 HEAVY BAG (backed by verified stopBagPlate270 plate) -->
+<section class="sec-bleed sec-bag" id="bag" aria-labelledby="bag-title">
+  <div class="sec-inner sec-bag-head">
+    <div class="sec-head">
+      <p class="kicker" data-gym3d="plate"><span class="num">05</span> Heavy bag</p>
+      <h2 id="bag-title">Live heavy bag</h2>
+      <p class="sub">The heavy bag physics and sound from the game, running live. Click, tap, or swipe across it.</p>
+    </div>
   </div>
-  <div class="bag-stage reveal">
+  <div class="bag-stage">
     <div class="bag-mount" id="bag-mount" aria-label="Interactive heavy bag"></div>
   </div>
 </section>
 
-<div class="rope rope-red" aria-hidden="true"></div>
-
-<!-- MODES -->
-<section class="sec sec-modes" id="modes" aria-labelledby="modes-title">
-  <div class="sec-head reveal" data-rail-pool=".55">
-    <p class="kicker" data-gym3d="plate">In the gym</p>
-    <h2 id="modes-title">Three ways to put the work in.</h2>
-  </div>
-  <!-- the game's own menu: three pads on the board; pressing one swaps the picture hanging beside it (and knocks it) -->
-  <div class="mode-rig">
-    <div class="mode-pads" role="tablist" aria-label="Modes">
-      <button class="pad pad-lg mode-pad" data-gym3d="pad" role="tab" aria-selected="true" aria-controls="mode-frame" data-mode="0"><span class="tape">Fight night</span></button>
-      <button class="pad pad-lg mode-pad" data-gym3d="pad" role="tab" aria-selected="false" aria-controls="mode-frame" data-mode="1"><span class="tape">Heavy bag</span></button>
-      <button class="pad pad-lg mode-pad" data-gym3d="pad" role="tab" aria-selected="false" aria-controls="mode-frame" data-mode="2"><span class="tape">Drills</span></button>
+<!-- 06 GAME MODES (backed by verified stopConsole plate) -->
+<section class="sec-bleed sec-modes" id="modes" aria-labelledby="modes-title">
+  <div class="sec-inner">
+    <div class="sec-head">
+      <p class="kicker" data-gym3d="plate"><span class="num">06</span> Game modes</p>
+      <h2 id="modes-title">Ways to play</h2>
     </div>
-    <figure class="mode-frame hang" id="mode-frame" role="tabpanel" aria-live="polite">
-      <span class="hook" aria-hidden="true"></span>
-      <img src="img/mode-fight.webp" alt="Liang in guard in the ring under the pink neon sign" width="1400" height="788" loading="lazy">
-      <figcaption class="mode-card" data-panel="leather"><h3>Fight night</h3><p>Step into the moonlit ring against a fighter who reads you. Hear the crowd rise when you hurt someone, and watch your best moments replay between rounds.</p></figcaption>
-    </figure>
-    <template id="mode-data">
-      <div data-img="img/mode-fight.webp" data-alt="Liang in guard in the ring under the pink neon sign" data-title="Fight night">Step into the moonlit ring against a fighter who reads you. Hear the crowd rise when you hurt someone, and watch your best moments replay between rounds.</div>
-      <div data-img="img/mode-bag.webp" data-alt="The heavy bag in the gym under the pink Pound for Pound neon" data-title="The heavy bag">Between fights, work the bag. It swings, dents and answers every shot, so you feel the difference between a slap and a real punch.</div>
-      <div data-img="img/mode-drills.webp" data-alt="The drills counter dial and punch badge beside the heavy bag" data-title="Drills">Coached drills sharpen your combinations and get a real sweat in, one round at a time.</div>
-    </template>
+    <div class="mode-rig">
+      <div class="mode-pads" role="tablist" aria-label="Modes">
+        <button class="pad pad-lg mode-pad" data-gym3d="pad" role="tab" aria-selected="true" aria-controls="mode-frame" data-mode="0"><span class="tape">Fight night</span></button>
+        <button class="pad pad-lg mode-pad" data-gym3d="pad" role="tab" aria-selected="false" aria-controls="mode-frame" data-mode="1"><span class="tape">Heavy bag</span></button>
+        <button class="pad pad-lg mode-pad" data-gym3d="pad" role="tab" aria-selected="false" aria-controls="mode-frame" data-mode="2"><span class="tape">Drills</span></button>
+      </div>
+      <figure class="mode-frame hang" id="mode-frame" role="tabpanel" aria-live="polite">
+        <span class="hook" aria-hidden="true"></span>
+        <img src="img/mode-fight.webp" alt="Liang in guard in the ring under the pink neon sign" width="1400" height="788" loading="lazy" decoding="async">
+        <figcaption class="mode-card" data-panel="leather"><h3>Fight night</h3><p>Bouts against adaptive AI opponents, with between-round highlight replays and knockdowns.</p></figcaption>
+      </figure>
+      <template id="mode-data">
+        <div data-img="img/mode-fight.webp" data-alt="Liang in guard in the ring under the pink neon sign" data-title="Fight night">Bouts against adaptive AI opponents, with between-round highlight replays and knockdowns.</div>
+        <div data-img="img/mode-bag.webp" data-alt="The heavy bag in the gym under the pink Pound for Pound neon" data-title="Heavy bag">Open heavy-bag sessions using the same swing physics, surface denting, and chain audio.</div>
+        <div data-img="img/mode-drills.webp" data-alt="The drills counter dial and punch badge beside the heavy bag" data-title="Drills">Coached rounds focused on combinations, timing, and conditioning.</div>
+      </template>
+    </div>
   </div>
 </section>
 
-<!-- GALLERY -->
+<!-- 07 GALLERY -->
 <section class="sec sec-gallery" id="gallery" aria-labelledby="gallery-title">
-  <div class="sec-head reveal" data-rail-pool=".55">
-    <p class="kicker" data-gym3d="plate">Gallery</p>
-    <h2 id="gallery-title">Straight from the game.</h2>
+  <div class="sec-head">
+    <p class="kicker" data-gym3d="plate"><span class="num">07</span> Gallery</p>
+    <h2 id="gallery-title">Screenshots</h2>
   </div>
   <div class="gallery">
-    <a class="shot hang wide" href="img/gal-select.webp"><img src="img/gal-select-th.webp" alt="Fighter select: Cole's poster, The All-American" width="720" height="405" loading="lazy"></a>
-    <a class="shot hang" href="img/gal-neon.webp"><img src="img/gal-neon-th.webp" alt="Liang under the pink Pound for Pound neon" width="720" height="405" loading="lazy"></a>
-    <a class="shot hang" href="img/gal-exchange.webp"><img src="img/gal-exchange-th.webp" alt="Liang and Malik trading punches" width="720" height="405" loading="lazy"></a>
-    <a class="shot hang" href="img/gal-pov.webp"><img src="img/gal-pov-th.webp" alt="First-person punch landing on Cole" width="720" height="405" loading="lazy"></a>
-    <a class="shot hang" href="img/gal-ring.webp"><img src="img/gal-ring-th.webp" alt="The empty ring under the neon sign" width="720" height="405" loading="lazy"></a>
-    <a class="shot hang wide" href="img/gal-menu.webp"><img src="img/gal-menu-th.webp" alt="The gym-made main menu: Fight, Heavy Bag, Radio, Progress, Settings" width="720" height="405" loading="lazy"></a>
-    <a class="shot hang" href="img/gal-bag.webp"><img src="img/gal-bag-th.webp" alt="The heavy bag in the gym" width="720" height="405" loading="lazy"></a>
-    <a class="shot hang" href="img/gal-cover.webp"><img src="img/gal-cover-th.webp" alt="Cole in guard in the night gym with the Pound for Pound logo" width="720" height="405" loading="lazy"></a>
+    <a class="shot wide" href="img/gal-select.webp"><img src="img/gal-select-th.webp" alt="Fighter select: Cole's poster, The All-American" width="720" height="405" loading="lazy" decoding="async"></a>
+    <a class="shot" href="img/gal-neon.webp"><img src="img/gal-neon-th.webp" alt="Liang under the pink Pound for Pound neon" width="720" height="405" loading="lazy" decoding="async"></a>
+    <a class="shot" href="img/gal-exchange.webp"><img src="img/gal-exchange-th.webp" alt="Liang and Malik trading punches" width="720" height="405" loading="lazy" decoding="async"></a>
+    <a class="shot" href="img/gal-pov.webp"><img src="img/gal-pov-th.webp" alt="First-person punch landing on Cole" width="720" height="405" loading="lazy" decoding="async"></a>
+    <a class="shot" href="img/gal-ring.webp"><img src="img/gal-ring-th.webp" alt="The empty ring under the neon sign" width="720" height="405" loading="lazy" decoding="async"></a>
+    <a class="shot wide" href="img/gal-menu.webp"><img src="img/gal-menu-th.webp" alt="The gym-made main menu: Fight, Heavy Bag, Radio, Progress, Settings" width="720" height="405" loading="lazy" decoding="async"></a>
+    <a class="shot" href="img/gal-bag.webp"><img src="img/gal-bag-th.webp" alt="The heavy bag in the gym" width="720" height="405" loading="lazy" decoding="async"></a>
+    <a class="shot" href="img/gal-cover.webp"><img src="img/gal-cover-th.webp" alt="Cole in guard in the night gym with the Pound for Pound logo" width="720" height="405" loading="lazy" decoding="async"></a>
   </div>
 </section>
 
-<!-- MULTIPLAYER TEASE -->
+<!-- MULTIPLAYER -->
 <section class="sec sec-mp" id="multiplayer" aria-labelledby="mp-title">
-  <div class="mp-stage reveal">
-    <img class="mp-ring" src="img/ring-plate.webp" alt="The empty ring, waiting" width="1920" height="1080" loading="lazy">
-    <img class="mp-silhouette" src="img/cole-full.webp" alt="" width="521" height="1100" loading="lazy" aria-hidden="true">
+  <div class="mp-stage">
+    <img class="mp-ring" src="img/ring-plate.webp" alt="The empty ring at night" width="1920" height="1080" loading="lazy" decoding="async">
+    <img class="mp-silhouette" src="img/cole-full.webp" alt="" width="521" height="1100" loading="lazy" decoding="async" aria-hidden="true">
     <div class="mp-copy">
-      <p class="tape tape-tag tape-blue">PvP · Coming soon</p>
-      <h2 id="mp-title">Online <span class="mp-word">multiplayer</span> is coming.</h2>
-      <p>Box real people. Same damage system, same ring, a real opponent in the other corner who can't fake it either.</p>
-      <p class="mp-lock"><span class="lock" aria-hidden="true"></span> Coming soon</p>
+      <p class="tape tape-tag tape-blue">Multiplayer · In development</p>
+      <h2 id="mp-title">Online <span class="mp-word">multiplayer</span></h2>
+      <p>Launching single-player first, with online head-to-head multiplayer planned for a post-launch update using the same ring and punch-grading rules.</p>
     </div>
   </div>
 </section>
 
 <!-- SUPPORT (Meta's external support link points at this domain) -->
 <section class="sec sec-support" id="support" aria-labelledby="support-title">
-  <div class="board-hang hang">
-  <div class="board" data-panel="board">
-    <h2 id="support-title">Support</h2>
-    <p>Stuck, found a bug, or have feedback? Email <a href="mailto:support@poundforpoundvr.com">support@poundforpoundvr.com</a>. It helps
-       to include your headset model, the game version (shown in the game menu) and what happened just before the
-       problem.</p>
-    <h3>Quick fixes</h3>
-    <ul>
-      <li><strong>Fighter feels too close or far:</strong> recenter your view with the Meta button, then re-run the
-          height and reach calibration from the menu.</li>
-      <li><strong>Not enough room:</strong> clear at least 2 x 2 m of floor. The game warns you near your boundary.</li>
-      <li><strong>Want your data deleted?</strong> See the <a href="privacy.html">Privacy Policy</a>.</li>
-    </ul>
-    <p class="note">Pound for Pound is made for players 13 and older. Play in a safe, cleared space and take breaks.</p>
-  </div>
+  <div class="board-hang">
+    <div class="board" data-panel="board">
+      <h2 id="support-title">Support</h2>
+      <p>Found a bug, stuck on setup, or have feedback? Email <a href="mailto:support@poundforpoundvr.com">support@poundforpoundvr.com</a> with your headset model, the game version shown in the menu, and what happened right before the issue.</p>
+      <h3>Quick fixes</h3>
+      <ul>
+        <li><strong>Fighter feels too close or far:</strong> recenter your view with the Meta button, then re-run height and reach calibration from the menu.</li>
+        <li><strong>Not enough room:</strong> clear at least 2 × 2 m of floor space. The game warns you near your boundary.</li>
+        <li><strong>Data deletion requests:</strong> see the <a href="privacy.html">Privacy Policy</a>.</li>
+      </ul>
+      <p class="note">Pound for Pound is rated for players 13 and older. Play in a clear space and take breaks.</p>
+    </div>
   </div>
 </section>
 
 </main>
 
 <footer class="foot">
-  <div class="foot-hang hang">
-  <div class="foot-card" data-panel="fightcard">
-    <img src="img/logo-rim-sm.webp" alt="" width="60" height="73" loading="lazy">
-    <p class="foot-bill">Coming soon to Meta Quest</p>
-    <p class="foot-cta"><a class="pad pad-red pad-sm" data-gym3d="cta" href="https://www.meta.com/experiences/1215417611661613/" rel="noopener"><span class="tape">Wishlist on Meta Quest</span></a></p>
-    <ul class="foot-links">
-      <li><a href="#support">Support</a></li>
-      <li><a href="privacy.html">Privacy Policy</a></li>
-      <li class="foot-mail"><a href="mailto:support@poundforpoundvr.com">support@poundforpoundvr.com</a></li>
-    </ul>
-    <p class="copy">&copy; 2026 NPC Theater. Pound for Pound.</p>
-  </div>
+  <div class="foot-hang">
+    <div class="foot-card" data-panel="fightcard">
+      <img src="img/logo-rim-sm.webp" alt="" width="60" height="73" loading="lazy" decoding="async">
+      <p class="foot-bill">Coming soon to Meta Quest</p>
+      <p class="foot-cta"><a class="pad pad-red pad-sm" data-gym3d="cta" href="https://www.meta.com/experiences/1215417611661613/" rel="noopener"><span class="tape">Wishlist on Meta Quest</span></a></p>
+      <ul class="foot-links">
+        <li><a href="#support">Support</a></li>
+        <li><a href="privacy.html">Privacy Policy</a></li>
+        <li class="foot-mail"><a href="mailto:support@poundforpoundvr.com">support@poundforpoundvr.com</a></li>
+      </ul>
+      <p class="copy">&copy; 2026 NPC Theater. Pound for Pound.</p>
+    </div>
   </div>
 </footer>
 
-<div class="lightbox" id="lightbox" hidden><button class="lb-close" aria-label="Close">×</button><img alt=""></div>
+<div class="lightbox" id="lightbox" hidden><button class="lb-close" aria-label="Close">×</button></div>
 
-<script type="module" src="js/site.js?v=41"></script>
+<script type="module" src="js/site.js?v=45"></script>
 </body>
 </html>
