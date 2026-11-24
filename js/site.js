@@ -127,7 +127,7 @@ const startGymUI = () => import('./gymui.js?v=3').then((m) => m.initGymUI()).cat
 if (document.readyState === 'complete') startGymUI(); else addEventListener('load', startGymUI, { once: true });
 
 // ---------- the rail: hardware-decoded 60fps ring backdrop (zero scroll-scrubbing, zero stepping, 0 idle rAF) ----------
-import('./rail.js?v=33').then(({ initRail }) => initRail({
+import('./rail.js?v=34').then(({ initRail }) => initRail({
   canvas: document.getElementById('rail'),
 })).catch((err) => { document.documentElement.classList.add('no-rail'); console.warn('rail unavailable', err); });
 
@@ -162,7 +162,7 @@ import('./rail.js?v=33').then(({ initRail }) => initRail({
 
     const startPlay = async () => {
       if (!v.src) {
-        const name = v.dataset.src.split('/').pop();
+        const name = v.dataset.src.split('/').pop().split('?')[0];
         const idx = await getVideoIndex();
         if (!idx.has(name)) return;
         v.src = v.dataset.src;
@@ -183,7 +183,7 @@ import('./rail.js?v=33').then(({ initRail }) => initRail({
       isVis = e.isIntersecting;
       if (isVis && isHeroVid && !reduce) {
         if (!v.src) {
-          const name = v.dataset.src.split('/').pop();
+          const name = v.dataset.src.split('/').pop().split('?')[0];
           const idx = await getVideoIndex();
           if (!isVis || !idx.has(name)) return;
           v.src = v.dataset.src;

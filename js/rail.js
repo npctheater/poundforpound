@@ -32,7 +32,7 @@ export function initRail({ canvas } = {}) {
     video.playsInline = true;
     video.preload = 'auto';
     video.poster = img.src;
-    video.src = isMobile ? 'assets/video/hero-ring-m.mp4' : 'assets/video/hero-ring.mp4';
+    video.src = isMobile ? 'assets/video/hero-ring-m.mp4?v=2' : 'assets/video/hero-ring.mp4?v=2';
     video.addEventListener('playing', () => {
       video.classList.add('ready');
       document.documentElement.classList.add('rail-live');
