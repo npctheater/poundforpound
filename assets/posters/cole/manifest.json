@@ -1,0 +1,20 @@
+{
+ "opening": {
+  "webm": "opening.webm",
+  "mp4": "opening.mp4"
+ },
+ "idle": {
+  "webm": "idle.webm",
+  "mp4": "idle.mp4"
+ },
+ "still": "still.webp",
+ "fps": 30,
+ "w": 1080,
+ "h": 1620,
+ "standin": false,
+ "codecs": {
+  "webm": "AV1 (libaom), yuv420p bt709",
+  "mp4": "HEVC (libx265) hvc1, faststart"
+ },
+ "source": "in-game fighter-select portal (Unity PortalSelectorExperience), headless capture 2026-11-24, 1800x2700 supersampled, gloves on"
+}

@@ -1,0 +1,22 @@
+{
+ "kind": "interim",
+ "albedo": "albedo.webp",
+ "normal": "normal.webp",
+ "w": 1600,
+ "h": 1100,
+ "slice": {
+  "l": 110,
+  "t": 110,
+  "r": 110,
+  "b": 110
+ },
+ "safe": {
+  "l": 120,
+  "t": 112,
+  "r": 120,
+  "b": 112
+ },
+ "pxPerCss": 2,
+ "ink": "#231e1a",
+ "note": "interim board from the gym-made kit textures; slice = 9-slice borders, safe = text-safe padding, both in source px"
+}

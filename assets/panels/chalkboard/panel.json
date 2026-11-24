@@ -1,0 +1,34 @@
+{
+ "kind": "chalkboard",
+ "albedo": "albedo.webp",
+ "normal": "normal.webp",
+ "height": "height.webp",
+ "beauty": "beauty.webp",
+ "w": 1200,
+ "h": 960,
+ "slice": {
+  "l": 240,
+  "t": 120,
+  "r": 240,
+  "b": 148
+ },
+ "safe": {
+  "l": 118,
+  "t": 116,
+  "r": 118,
+  "b": 136
+ },
+ "pxPerCss": 2.0,
+ "ink": "#efece4",
+ "accent": "#e9c46a",
+ "surface": "slate",
+ "beautyBleed": 100,
+ "boardInset": 24,
+ "heightRangeCss": 50.0,
+ "lightRest": [
+  -0.6,
+  0.65,
+  0.68
+ ],
+ "note": "baked from the game's gym-made Settings menu kit (build_panels.py); slice = 9-slice borders, safe = text-safe padding, both in source px; normal is screen-space y-down with spec in alpha; beauty is the lit board + contact shadow with beautyBleed source px of wall on every side"
+}

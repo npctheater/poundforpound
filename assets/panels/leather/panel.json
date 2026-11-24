@@ -1,0 +1,34 @@
+{
+ "kind": "leather",
+ "albedo": "albedo.webp",
+ "normal": "normal.webp",
+ "height": "height.webp",
+ "beauty": "beauty.webp",
+ "w": 1200,
+ "h": 960,
+ "slice": {
+  "l": 112,
+  "t": 112,
+  "r": 112,
+  "b": 112
+ },
+ "safe": {
+  "l": 92,
+  "t": 84,
+  "r": 92,
+  "b": 84
+ },
+ "pxPerCss": 2.0,
+ "ink": "#f3ead8",
+ "accent": "#e0b04c",
+ "surface": "leather",
+ "beautyBleed": 100,
+ "boardInset": 24,
+ "heightRangeCss": 50.0,
+ "lightRest": [
+  -0.6,
+  0.65,
+  0.68
+ ],
+ "note": "baked from the game's gym-made Settings menu kit (build_panels.py); slice = 9-slice borders, safe = text-safe padding, both in source px; normal is screen-space y-down with spec in alpha; beauty is the lit board + contact shadow with beautyBleed source px of wall on every side"
+}

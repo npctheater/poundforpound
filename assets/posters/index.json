@@ -1,0 +1,8 @@
+{
+ "about": "Fighters whose Unity poster bake has landed. Add \"<id>\": \"<id>/manifest.json\" when one arrives; the manifest lists opening, idle, still (see js/posters.js).",
+ "fighters": {
+  "cole": "cole/manifest.json",
+  "malik": "malik/manifest.json",
+  "liang": "liang/manifest.json"
+ }
+}
