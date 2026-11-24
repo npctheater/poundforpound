@@ -1,5 +1,6 @@
-// Fighter-select poster wall. Each bay shows its sharp still immediately, loads video only on scroll proximity,
-// plays its breakout on arrival/click, and strictly pauses ALL videos the instant the wall leaves the viewport.
+// Fighter-select poster wall: lean hardware-decoded 720x1080 H.264 portal breakouts + live idle loops.
+// Auto-plays staggered breakouts on arrival (desktop: all three; phone: whichever bay is centered in the swipe strip),
+// replays on click/tap/hover, and strictly pauses ALL videos the instant the wall leaves the viewport.
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const coarse = matchMedia('(pointer: coarse)').matches;
 
@@ -19,9 +20,9 @@ const probe = document.createElement('video');
 const can = (t) => probe.canPlayType(t) !== '';
 function pick(c) {
   if (typeof c === 'string') return c;
+  if (c.mp4 && can('video/mp4; codecs="hvc1.1.6.L120.90"')) return c.mp4;
   if (c.webm && can('video/webm; codecs="av01.0.08M.08"')) return c.webm;
-  if (c.mp4 && (can('video/mp4; codecs="hvc1.1.6.L120.90"') || !c.webm)) return c.mp4;
-  return c.webm || c.mp4;
+  return c.mp4 || c.webm;
 }
 
 export async function initPosters(wall) {
@@ -39,7 +40,6 @@ export async function initPosters(wall) {
     const idle = bay.querySelector('.bay-idle');
     const open = bay.querySelector('.bay-open');
 
-    // Always mount the real fighter still immediately so a bay never appears as blank sky/paper
     if (m.still) {
       let stillImg = film.querySelector('.bay-still');
       if (!stillImg) {
@@ -54,14 +54,18 @@ export async function initPosters(wall) {
       idle.poster = m.base + m.still;
     }
 
+    // Prefer baked-down hardware-decoded H.264 web clips (720x1080, 3.4x lighter, silky smooth on phone & desktop)
+    const openFile = m.openingWeb || pick(m.opening);
+    const idleFile = m.idleWeb || pick(m.idle);
+
     const s = {
       bay, idle, open, m, busy: false, played: false, loaded: false,
       load() {
         if (s.loaded) return;
         s.loaded = true;
-        idle.src = m.base + pick(m.idle);
-        open.src = m.base + pick(m.opening);
-        idle.preload = open.preload = 'metadata';
+        idle.src = m.base + idleFile;
+        open.src = m.base + openFile;
+        idle.preload = open.preload = 'auto';
       },
       pauseAll() {
         if (!idle.paused) idle.pause();
@@ -80,12 +84,12 @@ export async function initPosters(wall) {
     });
     open.addEventListener('ended', () => {
       s.busy = false;
-      bay.classList.remove('opening');
-      if (!wallVisible) { idle.pause(); return; }
+      if (!wallVisible) { bay.classList.remove('opening'); idle.pause(); return; }
       idle.currentTime = 0;
       const p = idle.play();
       if (p) p.catch(() => {});
       bay.classList.add('has-idle');
+      requestAnimationFrame(() => requestAnimationFrame(() => bay.classList.remove('opening')));
     });
   }));
 
@@ -111,8 +115,7 @@ export async function initPosters(wall) {
     }
   }
 
-  // Track wall visibility strictly: keep crisp fighter stills visible on arrival (never blank intro sky!),
-  // play portal breakout on click/tap or desktop hover, and pause ALL videos immediately off-screen.
+  // Strictly pause everything when #fighters leaves view; auto-play staggered breakouts on arrival
   new IntersectionObserver(([e]) => {
     wallVisible = e.isIntersecting;
     if (!wallVisible) {
@@ -120,21 +123,49 @@ export async function initPosters(wall) {
       for (const s of state.values()) s.pauseAll();
       return;
     }
-    for (const s of state.values()) {
-      if (s.bay.classList.contains('has-idle')) {
-        const p = s.idle.play();
-        if (p) p.catch(() => {});
+    if (!arrived) {
+      arrived = true;
+      const targets = coarse ? bays.slice(0, 1) : bays;
+      targets.forEach((b, i) => {
+        const id = setTimeout(() => { timers.delete(id); if (wallVisible) breakout(b); }, 180 + i * 420);
+        timers.add(id);
+      });
+    } else {
+      for (const s of state.values()) {
+        if (s.bay.classList.contains('has-idle') && (!coarse || s.bay.classList.contains('on'))) {
+          const p = s.idle.play();
+          if (p) p.catch(() => {});
+        }
       }
     }
-  }, { threshold: 0.05 }).observe(wall);
+  }, { threshold: 0.12 }).observe(wall);
 
-  // Subtle highlight on active bay (CSS-only transitions, zero continuous rAF)
+  // On phones, play whichever fighter is centered as the user swipes horizontally (only 1 active decoder at a time)
+  if (coarse) {
+    const bayIO = new IntersectionObserver((es) => {
+      if (!wallVisible) return;
+      for (const e of es) {
+        const bay = e.target;
+        const s = state.get(bay);
+        if (!s) continue;
+        if (e.isIntersecting) {
+          for (const other of state.values()) if (other.bay !== bay) other.pauseAll();
+          bays.forEach((b) => b.classList.toggle('on', b === bay));
+          if (!s.played) breakout(bay);
+          else if (bay.classList.contains('has-idle')) s.idle.play().catch(() => {});
+        }
+      }
+    }, { root: wall, threshold: 0.65 });
+    bays.forEach((b) => bayIO.observe(b));
+  }
+
   let current = null;
   const light = (bay) => {
     if (bay === current) return;
     current = bay;
     bays.forEach((b) => b.classList.toggle('on', b === bay));
     wall.classList.toggle('lit', !!bay);
+    if (!coarse && bay && state.get(bay)?.played) breakout(bay);
   };
 
   if (!coarse) {
@@ -151,7 +182,6 @@ export async function initPosters(wall) {
   bays.forEach((bay) => {
     bay.addEventListener('click', () => {
       if (coarse) {
-        // On phones, pause other bays when tapping one so only 1 video decodes at a time
         for (const s of state.values()) if (s.bay !== bay) s.pauseAll();
       }
       current = null;

@@ -171,6 +171,38 @@ export async function initPanels(root = document) {
     ro.observe(el);
   }
 
+  // Zero-cost desktop hover feel: subtle 3D hook tilt + moving warm lamp sheen ONLY on the hovered board (0 WebGL, 0 idle rAF)
+  if (!coarse && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    for (const el of els) {
+      let pend = 0, lx = 50, ly = 35, rx = 0, ry = 0;
+      const flush = () => {
+        pend = 0;
+        el.style.setProperty('--plx', `${lx.toFixed(1)}%`);
+        el.style.setProperty('--ply', `${ly.toFixed(1)}%`);
+        el.style.setProperty('--tilt-x', `${rx.toFixed(2)}deg`);
+        el.style.setProperty('--tilt-y', `${ry.toFixed(2)}deg`);
+      };
+      el.addEventListener('pointermove', (e) => {
+        if (e.pointerType !== 'mouse') return;
+        const r = el.getBoundingClientRect();
+        const nx = Math.max(-1, Math.min(1, ((e.clientX - r.left) / Math.max(1, r.width)) * 2 - 1));
+        const ny = Math.max(-1, Math.min(1, ((e.clientY - r.top) / Math.max(1, r.height)) * 2 - 1));
+        lx = (nx * 0.5 + 0.5) * 100;
+        ly = (ny * 0.5 + 0.5) * 100;
+        rx = -ny * 2.8;
+        ry = nx * 3.4;
+        el.classList.add('panel-hover');
+        if (!pend) pend = requestAnimationFrame(flush);
+      }, { passive: true });
+      el.addEventListener('pointerleave', () => {
+        if (pend) { cancelAnimationFrame(pend); pend = 0; }
+        el.classList.remove('panel-hover');
+        el.style.removeProperty('--tilt-x');
+        el.style.removeProperty('--tilt-y');
+      }, { passive: true });
+    }
+  }
+
   let resizeTimer = 0;
   addEventListener('resize', () => {
     clearTimeout(resizeTimer);

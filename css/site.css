@@ -152,6 +152,7 @@ h1 em { font-style: normal; color: #ff368c; -webkit-text-stroke: .04em #1a0610; 
 
 .rail-card {
   position: relative;
+  container-type: inline-size;
   max-width: min(470px, calc(50vw - 275px - var(--gutter)));
   margin: 0 0 32vh max(var(--gutter), calc(50vw - 755px));
   padding: clamp(22px, 2.6vw, 34px);
@@ -165,12 +166,19 @@ h1 em { font-style: normal; color: #ff368c; -webkit-text-stroke: .04em #1a0610; 
   margin-left: auto;
   margin-right: max(var(--gutter), calc(50vw - 755px));
 }
-.rail-card h2 { margin-bottom: 14px; font-size: clamp(34px, 3.6vw, 56px); }
+.rail-card h2 { margin-bottom: 14px; font-size: clamp(26px, 11.5cqi, 50px); overflow-wrap: break-word; }
 .lede-sm { font-size: clamp(16px, 1.3vw, 19px); color: #e2dacf; margin: 0; line-height: 1.55; }
 
 /* ---------- baked boards from js/panels.js (2D 9-slice beauty.webp, zero WebGL) ---------- */
 .rail-card.panel-on { background: none; border-radius: 0; box-shadow: none; }
-[data-panel] { position: relative; isolation: isolate; }
+[data-panel] { position: relative; isolation: isolate; transition: transform .35s cubic-bezier(.2, .8, .2, 1); }
+[data-panel].panel-hover { transform: perspective(1100px) rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg)); transition: transform .08s linear; }
+[data-panel].panel-on::after {
+  content: ""; position: absolute; inset: 12px; pointer-events: none; border-radius: 6px; opacity: 0;
+  background: radial-gradient(280px 240px at var(--plx, 50%) var(--ply, 35%), rgba(255, 224, 178, .24), rgba(255, 198, 130, .06) 52%, transparent 78%);
+  mix-blend-mode: soft-light; transition: opacity .35s ease;
+}
+[data-panel].panel-on.panel-hover::after { opacity: 1; transition: opacity .12s ease; }
 [data-panel].panel-on { padding: var(--safe-t) var(--safe-r) var(--safe-b) var(--safe-l); color: var(--panel-ink, #231e1a); }
 .panel-art { position: absolute; z-index: -1; pointer-events: none; }
 [data-panel].panel-on h2, [data-panel].panel-on h3 { color: var(--panel-ink, #231e1a); text-shadow: 0 1px 0 rgba(255, 255, 255, .28); }
@@ -315,14 +323,20 @@ h2 { font-size: clamp(36px, 4.6vw, 66px); }
 .mode-card h3 { font-size: 28px; margin: 0 0 6px; }
 .mode-card p { margin: 0; font-size: 16px; line-height: 1.5; }
 
-/* ---------- 07 gallery (clean framed prints, zero crooked wobble) ---------- */
-.gallery { display: grid; grid-template-columns: repeat(4, 1fr); gap: clamp(14px, 1.8vw, 22px); }
+/* ---------- 07 gallery (framed prints taped to the dark gym wall, zero idle rAF) ---------- */
+.gallery { display: grid; grid-template-columns: repeat(4, 1fr); gap: clamp(18px, 2.2vw, 28px); padding: 14px 0; }
 .shot {
-  position: relative; overflow: hidden; border-radius: 8px; background: #141216;
-  box-shadow: 0 16px 34px rgba(0, 0, 0, .55), 0 0 0 1px rgba(255, 255, 255, .08);
-  transition: transform .22s ease, box-shadow .22s ease;
+  position: relative; overflow: visible; border-radius: 2px; background: #ece5d8; padding: 7px 7px 18px;
+  box-shadow: 0 18px 34px rgba(0, 0, 0, .58), 0 3px 6px rgba(0, 0, 0, .42);
+  transform: rotate(var(--r0, 0deg)); transition: transform .22s cubic-bezier(.2, .8, .2, 1), box-shadow .22s ease;
 }
-.shot:hover { transform: translateY(-3px); box-shadow: 0 22px 42px rgba(0, 0, 0, .68), 0 0 0 1px rgba(255, 255, 255, .16); }
+.shot::before {
+  content: ""; position: absolute; left: 50%; top: -10px; width: 68px; height: 20px; margin-left: -34px; z-index: 2;
+  background: url(../img/tex-tape-tile.webp) center / 68px 20px, #e9e2d2; opacity: .92;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, .32); transform: rotate(-2.5deg); pointer-events: none;
+}
+.shot:nth-child(4n+1) { --r0: -.9deg; } .shot:nth-child(4n+2) { --r0: .7deg; } .shot:nth-child(4n+3) { --r0: -.5deg; } .shot:nth-child(4n) { --r0: 1.0deg; }
+.shot:hover { transform: rotate(0deg) translateY(-4px) scale(1.015); box-shadow: 0 24px 44px rgba(0, 0, 0, .72); z-index: 2; }
 .shot.wide { grid-column: span 2; }
 .shot img { width: 100%; height: 100%; aspect-ratio: 16 / 9; object-fit: cover; }
 
@@ -379,8 +393,13 @@ h2 { font-size: clamp(36px, 4.6vw, 66px); }
 
 /* ---------- desktop kicker plate scaling ---------- */
 @media (min-width: 821px) {
-  .rail-card .kicker.g3d-plate { font-size: clamp(19px, 1.5vw, 26px); padding: 10px 18px 9px; gap: 10px; }
-  .rail-card .kicker.g3d-plate .num { font-size: clamp(15px, 1.15vw, 20px); }
+  .rail-card .kicker.g3d-plate { font-size: clamp(16px, 6.2cqi, 24px); padding: 9px 16px 8px; gap: 9px; max-width: 100%; }
+  .rail-card .kicker.g3d-plate .num { font-size: clamp(13px, 5cqi, 19px); }
+}
+@media (min-width: 821px) and (max-width: 1220px) {
+  .rail-card, .rail-card-plague, .rail-card-fn { max-width: min(400px, calc(50vw - 175px - var(--gutter))); }
+  .rail-card { margin-left: var(--gutter); }
+  .rail-card-plague, .rail-card-fn { margin-left: auto; margin-right: var(--gutter); }
 }
 
 /* ---------- tablet / medium ---------- */

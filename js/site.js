@@ -61,7 +61,7 @@ const hangReady = import('./hang.js?v=17').then((m) => { m.initHang(); return m;
 import('./chalk.js?v=8').then((m) => m.initChalk(document.querySelector('.chalk-hold'))).catch((err) => console.warn('chalk unavailable', err));
 
 // ---------- copy panels: pre-lit baked boards (zero WebGL, lazy per-panel) ----------
-import('./panels.js?v=24').then((m) => m.initPanels()).catch((err) => console.warn('panels unavailable', err));
+import('./panels.js?v=25').then((m) => m.initPanels()).catch((err) => console.warn('panels unavailable', err));
 
 // ---------- fighter-select poster wall (lazy init only near view) ----------
 {
@@ -70,7 +70,7 @@ import('./panels.js?v=24').then((m) => m.initPanels()).catch((err) => console.wa
     const o = new IntersectionObserver(([e]) => {
       if (e.isIntersecting) {
         o.disconnect();
-        import('./posters.js?v=18').then((m) => m.initPosters(wall)).catch((err) => console.warn('posters unavailable', err));
+        import('./posters.js?v=19').then((m) => m.initPosters(wall)).catch((err) => console.warn('posters unavailable', err));
       }
     }, { rootMargin: '450px 0px' });
     o.observe(wall);
@@ -120,7 +120,7 @@ const startGymUI = () => import('./gymui.js?v=3').then((m) => m.initGymUI()).cat
 if (document.readyState === 'complete') startGymUI(); else addEventListener('load', startGymUI, { once: true });
 
 // ---------- the rail: artifact-free night-gym flythrough (zero depth-warp, zero WebGL, 0 idle rAF) ----------
-import('./rail.js?v=29').then(({ initRail }) => initRail({
+import('./rail.js?v=30').then(({ initRail }) => initRail({
   canvas: document.getElementById('rail'),
   manifest: 'assets/rail/seg01/frames/manifest.json',
   maxDpr: 1.5,

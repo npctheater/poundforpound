@@ -195,15 +195,17 @@ export async function initRail({ canvas, manifest = 'assets/rail/seg01/frames/ma
   function draw(bm, dimVal) {
     ensureSize();
     if (!W || !H) return;
-    // Slight 1.6% overscan gives room for subtle artifact-free 2D micro-pan on mouse move
-    const overscan = reduce ? 1 : 1.018;
+    // Tiny overscan + strictly clamped micro-pan (<= 5px regardless of aspect ratio) so mouse move never yanks the room
+    const overscan = reduce ? 1 : 1.008;
     const canAspect = W / H;
     const imgAspect = bm.width / bm.height;
     let dw, dh;
     if (canAspect > imgAspect) { dw = W * overscan; dh = dw / imgAspect; }
     else { dh = H * overscan; dw = dh * imgAspect; }
-    const panX = reduce ? 0 : -px * (dw - W) * 0.45;
-    const panY = reduce ? 0 : -py * (dh - H) * 0.45;
+    const maxPanX = Math.min(Math.max(0, (dw - W) * 0.45), W * 0.0035);
+    const maxPanY = Math.min(Math.max(0, (dh - H) * 0.45), H * 0.0035);
+    const panX = reduce ? 0 : -px * 2 * maxPanX;
+    const panY = reduce ? 0 : -py * 2 * maxPanY;
     const dx = (W - dw) * 0.5 + panX;
     const dy = (H - dh) * 0.5 + panY;
 
