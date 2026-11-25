@@ -78,6 +78,14 @@ a:hover { color: #ffb0a8; }
 .pad-lg .tape { font-size: clamp(15px, 1.5vw, 19px); padding: 9px 16px 8px; }
 .tape-tag { transform: rotate(-1.2deg); font-size: 12px; margin: 0 0 18px; }
 .tape-blue { background-color: #dce4f5; color: #141a2b; }
+.tape-blurple { background-color: #dfe2ff; color: #161a3a; }
+
+/* ---------- Discord: blurple leather pads with the logo printed beside the tape ---------- */
+.pad-discord { --pad-bg: url(../img/tex-leather-blurple-tile.webp); --pad-tint: rgba(36, 40, 110, .22); gap: .55em; }
+.pad-discord::before { border-color: rgba(228, 232, 255, .5); }
+.pad-icon { flex: none; width: 1.55em; height: 1.55em; fill: #f3ead8; filter: drop-shadow(0 1px 1px rgba(10, 12, 40, .5)); }
+.pad-lg .pad-icon { width: 30px; height: 30px; }
+.pad-sm .pad-icon { width: 18px; height: 18px; }
 
 /* ---------- nav (stays framed on ultrawide, clean on mobile) ---------- */
 .nav {
@@ -140,7 +148,8 @@ h1, h2, h3 { font-family: var(--display); font-weight: 400; letter-spacing: .01e
 h1 { font-size: clamp(44px, 5.2vw, 82px); text-shadow: .03em .045em 0 rgba(10, 8, 10, .92), 0 6px 26px rgba(0, 0, 0, .65); }
 h1 em { font-style: normal; color: #ff368c; -webkit-text-stroke: .04em #1a0610; paint-order: stroke fill; text-shadow: .03em .045em 0 rgba(10, 8, 10, .92); }
 .lede { font-size: clamp(18px, 1.55vw, 22px); color: var(--cream); max-width: 24em; margin: 18px 0 28px; text-shadow: 0 2px 12px rgba(0, 0, 0, .95); }
-.cta-row { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 20px; }
+.cta-row { display: grid; grid-template-columns: max-content; justify-items: stretch; gap: 14px; }
+.cta-row .soon { justify-self: start; margin-top: 4px; }
 .soon { font: 600 14px/1 var(--label); letter-spacing: .14em; text-transform: uppercase; color: var(--gold); text-shadow: 0 2px 10px rgba(0, 0, 0, .95); }
 
 /* ---------- rail sections (symmetric left/right lanes clear of Cole on both 1080p & 2560p ultrawide) ---------- */
@@ -368,6 +377,20 @@ h2 { font-size: clamp(36px, 4.6vw, 66px); }
 .mp-copy .mp-word { display: block; font-size: 1.7em; line-height: .92; color: #b7ccff; letter-spacing: .01em; }
 .mp-copy p:not(.tape) { color: #d8deec; margin: 0; font-size: clamp(16px, 1.3vw, 18px); }
 
+/* ---------- community (Discord) ---------- */
+.sec-community { padding-top: clamp(24px, 4vw, 56px); }
+.community-card {
+  position: relative; max-width: 1000px; margin: 0 auto; display: grid; grid-template-columns: auto 1fr; align-items: center;
+  gap: clamp(24px, 4.5vw, 64px); padding: clamp(28px, 4.5vw, 60px); border-radius: 14px;
+  background: linear-gradient(rgba(20, 18, 20, .25), rgba(20, 18, 20, .25)), url(../img/tex-leather-black-tile.webp) 0 0 / 256px;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .6), 0 28px 64px rgba(0, 0, 0, .62);
+}
+.community-card.panel-on { background: none; box-shadow: none; border-radius: 0; }
+.community-mark { width: clamp(96px, 12vw, 160px); height: auto; fill: #f3ead8; opacity: .9; filter: drop-shadow(0 2px 0 rgba(0, 0, 0, .55)); }
+.community-copy .tape, .community-card.panel-on .community-copy p.tape { color: #161a3a; text-shadow: none; }
+.community-copy h2 { font-size: clamp(34px, 4vw, 54px); line-height: .96; margin-bottom: 14px; text-wrap: balance; }
+.community-copy p:not(.tape) { color: #d8deec; margin: 0 0 26px; font-size: clamp(16px, 1.3vw, 18px); max-width: 34em; }
+
 /* ---------- support & footer (centered cleanly on desktop, ultrawide & phone) ---------- */
 .board-hang { max-width: 860px; margin: 0 auto; }
 .board {
@@ -388,7 +411,7 @@ h2 { font-size: clamp(36px, 4.6vw, 66px); }
 .foot-card img { display: block; width: 58px; height: auto; margin: 0 auto 10px; }
 .foot-bill { margin: 0 0 14px; font: 600 15px/1.3 var(--label); letter-spacing: .08em; text-transform: uppercase; color: var(--gold); }
 [data-panel].panel-on .foot-bill { color: #741513; }
-.foot-cta { margin: 0 0 10px; }
+.foot-cta { margin: 0 0 10px; display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
 .foot .pad { min-height: 48px; padding-top: 0; padding-bottom: 0; }
 .foot-links { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 0 6px; }
 .foot-links li + li::before { content: "\00b7"; color: var(--muted); margin-right: 4px; }
@@ -448,7 +471,8 @@ h2 { font-size: clamp(36px, 4.6vw, 66px); }
   .hero-logo { display: none; }
   h1 { font-size: clamp(34px, 9.5vw, 46px); }
   .lede { font-size: 17px; margin: 12px 0 18px; max-width: none; }
-  .cta-row { flex-direction: column; align-items: stretch; gap: 10px; }
+  .cta-row { grid-template-columns: 1fr; gap: 10px; }
+  .cta-row .soon { justify-self: center; margin-top: 0; }
   .cta-row .pad-lg { min-height: 54px; width: 100%; font-size: 17px; }
   .soon { text-align: center; font-size: 14px; }
 
@@ -514,6 +538,9 @@ h2 { font-size: clamp(36px, 4.6vw, 66px); }
   .mp-stage { min-height: 360px; }
   .mp-silhouette { right: -8%; height: 68%; opacity: .55; }
   .mp-copy { padding: 26px 20px; }
+  .community-card { grid-template-columns: 1fr; justify-items: start; gap: 18px; padding: 26px 20px; }
+  .community-mark { width: 72px; }
+  .community-copy .pad-lg { width: 100%; min-height: 54px; }
 
   .foot { padding: 24px 16px 64px; }
   .foot .pad { min-height: 52px; width: min(100%, 320px); font-size: 16px; }

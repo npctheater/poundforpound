@@ -123,7 +123,7 @@ import('./panels.js?v=25').then((m) => m.initPanels()).catch((err) => console.wa
 }
 
 // ---------- gym-made 3D UI: bake once into 2D canvases and release its WebGL context immediately ----------
-const startGymUI = () => import('./gymui.js?v=3').then((m) => m.initGymUI()).catch((err) => console.warn('gym UI unavailable', err));
+const startGymUI = () => import('./gymui.js?v=5').then((m) => m.initGymUI()).catch((err) => console.warn('gym UI unavailable', err));
 if (document.readyState === 'complete') startGymUI(); else addEventListener('load', startGymUI, { once: true });
 
 // ---------- the rail: hardware-decoded 60fps ring backdrop (zero scroll-scrubbing, zero stepping, 0 idle rAF) ----------

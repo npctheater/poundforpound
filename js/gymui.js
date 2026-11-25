@@ -22,6 +22,8 @@
 //     "pad"      black leather pad, the element's .tape child becomes a strip of athletic tape with its label  (nav links)
 //     "pad-red"  the same in crimson                                                                           (nav Wishlist)
 //     "cta"      crimson cushion: deeper pillow, chrome rivets, heavier press, a slow idle sway                   (hero / footer CTA)
+//     "pad-discord" / "cta-discord"  the pad / cushion in Discord blurple leather (no rivets); a .pad-icon child holding an
+//                svg <path> is screen-printed into the leather beside the tape, like a plate's print     (Join the Discord)
 //     "plate"    section header plate for a .kicker: black leather, the label screen-printed in cream, the .num on a tape patch
 //   opts: selector, force (skip the low-end gate), dprCap (default 1.75), dprCapCoarse (default 2), debug (fn(stats) per second)
 //   controller: { pads, destroy() }
@@ -37,12 +39,15 @@ const KIND = {
   pad:       { leather: 'black', roll: .075, puff: .17, hz: 4.2, zeta: .6,  lift: 2,   tiltH: 5.5, tiltP: 8,  sink: 4.5, flat: .5,  dent: 2.6, sway: 0,  rivets: false },
   'pad-red': { leather: 'red',   roll: .075, puff: .17, hz: 4.2, zeta: .6,  lift: 2,   tiltH: 5.5, tiltP: 8,  sink: 4.5, flat: .5,  dent: 2.6, sway: 0,  rivets: false },
   cta:       { leather: 'red',   roll: .075, puff: .21, hz: 2.6, zeta: .62, lift: 3,   tiltH: 5,   tiltP: 7,  sink: 7,   flat: .8,  dent: 5,   sway: 0,  rivets: true },
+  'pad-discord': { leather: 'blurple', roll: .075, puff: .17, hz: 4.2, zeta: .6, lift: 2, tiltH: 5.5, tiltP: 8, sink: 4.5, flat: .5, dent: 2.6, sway: 0, rivets: false },
+  'cta-discord': { leather: 'blurple', roll: .075, puff: .21, hz: 2.6, zeta: .62, lift: 3, tiltH: 5, tiltP: 7, sink: 7, flat: .8, dent: 5, sway: 0, rivets: false },
   plate:     { leather: 'black', roll: .075, puff: .14, hz: 3.2, zeta: .62, lift: 1.5, tiltH: 3.5, tiltP: 5,  sink: 3.5, flat: .4,  dent: 3,   sway: 0,  rivets: true },
 };
 // lab layout.json params (leather / red / tape / metal), satin values
 const MAT = {
   black: { spec: .30, shin: 60, rim: .10, specCol: [1, .88, .74], thread: [.062, .05, .04], gain: 1.55, cav: .3 },
   red:   { spec: .30, shin: 60, rim: .10, specCol: [1, .82, .70], thread: [.30, .085, .065], gain: 1.0, cav: .25 },
+  blurple: { spec: .30, shin: 60, rim: .10, specCol: [.88, .90, 1], thread: [.11, .12, .34], gain: .96, cav: .28 },
 };
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -385,7 +390,7 @@ const CSS = `
 .g3d-on.pad:hover{background:none!important;box-shadow:none!important;transform:translateY(-2px)!important;filter:brightness(1.08)!important}
 .g3d-on.pad:active{background:none!important;box-shadow:none!important;transform:translateY(1px) scale(.975)!important;filter:brightness(.96)!important}
 .g3d-on.pad::before{display:none}
-.g3d-on .tape{opacity:0!important}
+.g3d-on .tape,.g3d-on .pad-icon{opacity:0!important}
 .kicker.g3d-plate{display:inline-flex;align-items:center;gap:12px;font:400 27px/1 var(--display,Anton,sans-serif);letter-spacing:.05em;color:var(--cream,#f3ead8);padding:11px 24px 10px 24px;margin-bottom:22px;border-radius:10px}
 .kicker.g3d-plate .num{font:400 21px/1 var(--display,Anton,sans-serif);letter-spacing:.05em;color:var(--tape-ink,#1d1b19);background:var(--tape,#ece5d2);border:0;border-radius:0;padding:5px 7px 4px;transform:rotate(-3deg)}
 .g3d-on.kicker{color:transparent}
@@ -429,12 +434,14 @@ export async function initGymUI(opts = {}) {
   }, undefined, rej));
   let tex;
   try {
-    const [black, red, det, tapeImg] = await Promise.all([
+    const needBlurple = hosts.some((el) => KIND[el.dataset.gym3d].leather === 'blurple');
+    const [black, red, det, tapeImg, blurple] = await Promise.all([
       load(URL_OF('../img/tex-leather-black-tile.webp'), true), load(URL_OF('../img/tex-leather-red-tile.webp'), true),
       load(URL_OF('../assets/gymui/detail_leather.webp'), false),
       new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = URL_OF('../img/tex-tape-tile.webp'); }),
+      needBlurple ? load(URL_OF('../img/tex-leather-blurple-tile.webp?v=1'), true) : null,
     ]);
-    tex = { black, red, det, tapeImg };
+    tex = { black, red, det, tapeImg, blurple };
     const fonts = Promise.all([document.fonts.load('400 20px "Archivo Black"'), document.fonts.load('400 20px "Anton"')]);
     await Promise.race([fonts, new Promise((r) => setTimeout(r, 2500))]);
   } catch (e) { renderer.dispose(); return null; }
@@ -554,6 +561,13 @@ export async function initGymUI(opts = {}) {
       } else {
         const tape = h.querySelector('.tape');
         if (tape) this.labels.push({ kind: 'tape', box: rel(tape.getBoundingClientRect()), text: textOf(tape), ang: (this.rand() - 0.5) * 2.6 * DEG });
+        const icon = h.querySelector('.pad-icon');
+        const path = icon && icon.querySelector('path');
+        if (path) {
+          const svg = icon.closest('svg') || icon.querySelector('svg') || icon;
+          const vb = (svg.getAttribute('viewBox') || '0 0 24 24').split(/[\s,]+/).map(Number);
+          this.labels.push({ kind: 'icon', box: rel(svg.getBoundingClientRect()), d: path.getAttribute('d'), vb });
+        }
       }
       this.radius = parseFloat(cs.borderTopLeftRadius) || Math.min(this.h * 0.3, 12);
       this.align();
@@ -602,8 +616,21 @@ export async function initGymUI(opts = {}) {
       // the face print (plates): rasterised from the DOM label in its own computed font
       let inkTex = blankInk, inkRect = new THREE.Vector4(0, 0, 1, 1), hasInk = 0;
       const tapes = [];
+      const iconLb = this.labels.find((l) => l.kind === 'icon');
       for (const lb of this.labels) {
-        if (lb.kind === 'print') {
+        if (lb.kind === 'icon') {
+          // the logo, screen-printed into the leather in the plates' cream ink (shaded, dented and pressed with the pad)
+          const sc = Math.min(dpr * 2, 2048 / w);
+          const c = document.createElement('canvas'); c.width = Math.ceil(w * sc); c.height = Math.ceil(h * sc);
+          const g = c.getContext('2d');
+          g.fillStyle = '#000'; g.fillRect(0, 0, c.width, c.height);
+          const bx = lb.box, [vx, vy, vw, vh] = lb.vb, k = Math.min(bx.w / vw, bx.h / vh) * sc;
+          g.setTransform(k, 0, 0, k, (bx.x + (bx.w - vw * k / sc) / 2) * sc - vx * k, (bx.y + (bx.h - vh * k / sc) / 2) * sc - vy * k);
+          g.fillStyle = '#fff'; g.fill(new Path2D(lb.d));
+          const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.NoColorSpace; t.anisotropy = maxAniso; t.generateMipmaps = true;
+          t.minFilter = THREE.LinearMipmapLinearFilter; t.flipY = true;
+          inkTex = t; this.texs.push(t); hasInk = 1; inkRect.set(-a, -b, w, h);
+        } else if (lb.kind === 'print') {
           const sc = Math.min(dpr * 2, 2048 / w);
           const c = document.createElement('canvas'); c.width = Math.ceil(w * sc); c.height = Math.ceil(h * sc);
           const g = c.getContext('2d');
@@ -628,11 +655,18 @@ export async function initGymUI(opts = {}) {
             const padX = Math.max(5, th * 0.42), maxW = iw * (h < 40 ? 0.9 : 0.84);
             if (textW + 2 * padX > maxW) { fpx *= (maxW - 2 * padX) / textW; textW = measure(fpx); }
             tw = Math.min(maxW, Math.max(textW + 2 * padX, iw * 0.7));
+            if (iconLb) {                                    // share the face with the printed logo: the strip sits right of it
+              const x0 = iconLb.box.x + iconLb.box.w + Math.max(4, th * 0.22), x1 = w - dim.stitch - Math.max(3, th * 0.12);
+              const room = Math.max(10, x1 - x0);
+              if (textW + 2 * padX > room) { fpx *= Math.max(0.5, (room - 2 * padX) / textW); textW = measure(fpx); }
+              tw = Math.min(room, textW + 2 * padX);
+              lb.cx = (x0 + x1) / 2 - a;
+            }
           }
           lb.tw = tw;
           const t = tapeTexture(str, fpx, textW, tw, th, this.rand);
           this.texs.push(t);
-          const cx = this.kind === 'plate' ? bx.x + bx.w / 2 - a : 0, cy = this.kind === 'plate' ? b - (bx.y + bx.h / 2) : 0;
+          const cx = this.kind === 'plate' ? bx.x + bx.w / 2 - a : (lb.cx || 0), cy = this.kind === 'plate' ? b - (bx.y + bx.h / 2) : 0;
           const geo = tapeGeometry(dim, cx, cy, tw, th, lb.ang, 0.55);
           const m = new THREE.ShaderMaterial({
             vertexShader: TAPE_VERT, fragmentShader: TAPE_FRAG, transparent: true, premultipliedAlpha: true, depthWrite: false,
@@ -674,7 +708,7 @@ export async function initGymUI(opts = {}) {
           uTile: { value: new THREE.Vector4(130, 44, this.rand() * 180, this.rand() * 180) },
           uHasInk: { value: hasInk }, uInk: { value: inkRect },
           uSt: { value: dim.stitch }, uDash: { value: 1 }, uSeed: { value: this.seed }, uGain: { value: mat.gain }, uCav: { value: mat.cav },
-          uSpec: { value: mat.spec }, uShin: { value: mat.shin }, uRim: { value: mat.rim }, uRed: { value: K.leather === 'red' ? 1 : 0 },
+          uSpec: { value: mat.spec }, uShin: { value: mat.shin }, uRim: { value: mat.rim }, uRed: { value: K.leather !== 'black' ? 1 : 0 },
           uSpecCol: { value: new THREE.Vector3(...mat.specCol) }, uThread: { value: new THREE.Vector3(...mat.thread) },
           uTape0: { value: tapes[0] || new THREE.Vector4() }, uTape1: { value: tapes[1] || new THREE.Vector4() },
           uRiv: { value: riv }, uPress: { value: 0 }, uChalk: { value: new THREE.Vector4(0, 0, Math.max(5, h * 0.18), 0) },

@@ -18,7 +18,7 @@
 <link rel="preload" href="fonts/Anton-Regular.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="img/hero-rail0.webp?v=3" as="image" media="(min-width: 821px)">
 <link rel="preload" href="img/rail-m0.webp?v=3" as="image" media="(max-width: 820px)">
-<link rel="stylesheet" href="css/site.css?v=50">
+<link rel="stylesheet" href="css/site.css?v=54">
 <script type="importmap">{"imports":{"three":"./vendor/three/three.module.min.js","three/addons/":"./vendor/three/addons/"}}</script>
 </head>
 <body>
@@ -34,6 +34,7 @@
     <a class="pad pad-sm" data-gym3d="pad" href="#bag"><span class="tape">Heavy bag</span></a>
     <a class="pad pad-sm" data-gym3d="pad" href="#gallery"><span class="tape">Gallery</span></a>
     <a class="pad pad-sm" data-gym3d="pad" href="#support"><span class="tape">Support</span></a>
+    <a class="pad pad-sm pad-discord nav-discord" data-gym3d="pad-discord" href="https://discord.gg/xFfvsQuBx" rel="noopener"><svg class="pad-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20.317 4.37a19.79 19.79 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.74 19.74 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.1 13.1 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.3 12.3 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.84 19.84 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg><span class="tape">Discord</span></a>
   </nav>
   <a class="pad pad-red pad-sm nav-cta" data-gym3d="pad-red" href="https://www.meta.com/experiences/1215417611661613/" rel="noopener"><span class="tape">Wishlist</span></a>
 </header>
@@ -49,6 +50,7 @@
     <p class="lede">Physics-graded punches, reactive opponents, heavy bag work, and coached drills for Meta Quest.</p>
     <div class="cta-row">
       <a class="pad pad-red pad-lg" data-gym3d="cta" href="https://www.meta.com/experiences/1215417611661613/" rel="noopener"><span class="tape">Wishlist on Meta Quest</span></a>
+      <a class="pad pad-discord pad-lg" data-gym3d="cta-discord" href="https://discord.gg/xFfvsQuBx" rel="noopener"><svg class="pad-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20.317 4.37a19.79 19.79 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.74 19.74 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.1 13.1 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.3 12.3 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.84 19.84 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg><span class="tape">Join the Discord</span></a>
       <span class="soon">Coming soon to Meta&nbsp;Quest</span>
     </div>
   </div>
@@ -251,12 +253,25 @@
   </div>
 </section>
 
+<!-- COMMUNITY: DISCORD -->
+<section class="sec sec-community" id="community" aria-labelledby="community-title">
+  <div class="community-card ink-light" data-panel="leather">
+    <svg class="community-mark" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20.317 4.37a19.79 19.79 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.74 19.74 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.1 13.1 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.3 12.3 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.84 19.84 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
+    <div class="community-copy">
+      <p class="tape tape-tag tape-blurple">Community · Discord</p>
+      <h2 id="community-title">Come hang out in the gym</h2>
+      <p>New screenshots, playtest calls and dev news show up on our Discord first. Talk boxing with other players and the people making the game.</p>
+      <a class="pad pad-discord pad-lg" data-gym3d="cta-discord" href="https://discord.gg/xFfvsQuBx" rel="noopener"><svg class="pad-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20.317 4.37a19.79 19.79 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.74 19.74 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.1 13.1 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.3 12.3 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.84 19.84 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg><span class="tape">Join the Discord</span></a>
+    </div>
+  </div>
+</section>
+
 <!-- SUPPORT (Meta's external support link points at this domain) -->
 <section class="sec sec-support" id="support" aria-labelledby="support-title">
   <div class="board-hang">
     <div class="board" data-panel="board">
       <h2 id="support-title">Support</h2>
-      <p>Found a bug, stuck on setup, or have feedback? Email <a href="mailto:support@poundforpoundvr.com">support@poundforpoundvr.com</a> with your headset model, the game version shown in the menu, and what happened right before the issue.</p>
+      <p>Found a bug, stuck on setup, or have feedback? Email <a href="mailto:support@poundforpoundvr.com">support@poundforpoundvr.com</a> with your headset model, the game version shown in the menu, and what happened right before the issue. For quick questions, or to talk with other players, join the <a href="https://discord.gg/xFfvsQuBx" rel="noopener">Discord</a>.</p>
       <h3>Quick fixes</h3>
       <ul>
         <li><strong>Fighter feels too close or far:</strong> recenter your view with the Meta button, then re-run height and reach calibration from the menu.</li>
@@ -275,9 +290,10 @@
     <div class="foot-card" data-panel="fightcard">
       <img src="img/logo-rim-sm.webp" alt="" width="60" height="73" loading="lazy" decoding="async">
       <p class="foot-bill">Coming soon to Meta Quest</p>
-      <p class="foot-cta"><a class="pad pad-red pad-sm" data-gym3d="cta" href="https://www.meta.com/experiences/1215417611661613/" rel="noopener"><span class="tape">Wishlist on Meta Quest</span></a></p>
+      <p class="foot-cta"><a class="pad pad-red pad-sm" data-gym3d="cta" href="https://www.meta.com/experiences/1215417611661613/" rel="noopener"><span class="tape">Wishlist on Meta Quest</span></a><a class="pad pad-discord pad-sm" data-gym3d="cta-discord" href="https://discord.gg/xFfvsQuBx" rel="noopener"><svg class="pad-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20.317 4.37a19.79 19.79 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.74 19.74 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.1 13.1 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.3 12.3 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.84 19.84 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg><span class="tape">Join the Discord</span></a></p>
       <ul class="foot-links">
         <li><a href="#support">Support</a></li>
+        <li><a href="https://discord.gg/xFfvsQuBx" rel="noopener">Discord</a></li>
         <li><a href="privacy.html">Privacy Policy</a></li>
         <li class="foot-mail"><a href="mailto:support@poundforpoundvr.com">support@poundforpoundvr.com</a></li>
       </ul>
@@ -288,6 +304,6 @@
 
 <div class="lightbox" id="lightbox" hidden><button class="lb-close" aria-label="Close">×</button></div>
 
-<script type="module" src="js/site.js?v=52"></script>
+<script type="module" src="js/site.js?v=53"></script>
 </body>
 </html>
