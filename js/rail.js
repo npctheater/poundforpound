@@ -1,6 +1,6 @@
 // Hardware-decoded 60fps night-gym ring backdrop (zero scroll-scrubbing, zero stepping, zero WebGL, 0 rAF loops).
-// Plays Cole's continuous ring fly-in -> close front face -> counter punch smoothly on the browser's GPU video
-// decoder while scrolling stays 100% native-compositor locked, and pauses immediately once below #fightnight.
+// Opens on the authentic in-game knockout spotlight slow-motion sequence, then flows through head-stabilized
+// first-person exchanges while scrolling stays 100% native-compositor locked, pausing once below #fightnight.
 
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const coarse = matchMedia('(pointer: coarse)').matches;
@@ -18,7 +18,7 @@ export function initRail({ canvas } = {}) {
 
   const img = document.createElement('img');
   img.className = 'rail-poster';
-  img.src = isMobile ? 'img/rail-m0.webp' : 'img/hero-rail0.webp';
+  img.src = isMobile ? 'img/rail-m0.webp?v=3' : 'img/hero-rail0.webp?v=3';
   img.alt = '';
   img.decoding = 'async';
   stage.appendChild(img);
@@ -32,7 +32,7 @@ export function initRail({ canvas } = {}) {
     video.playsInline = true;
     video.preload = 'auto';
     video.poster = img.src;
-    video.src = isMobile ? 'assets/video/hero-ring-m.mp4?v=2' : 'assets/video/hero-ring.mp4?v=2';
+    video.src = isMobile ? 'assets/video/hero-ring-m.mp4?v=3' : 'assets/video/hero-ring.mp4?v=3';
     video.addEventListener('playing', () => {
       video.classList.add('ready');
       document.documentElement.classList.add('rail-live');
